@@ -1,6 +1,11 @@
 import { test, expect } from '@playwright/test';
 
 const demo = '/recorridos/demostracion/';
+const databaseTour = async request => {
+  const response = await request.get(demo);
+  const html = await response.text();
+  return JSON.parse(html.match(/<script id="tour-data" type="application\/json">([\s\S]*?)<\/script>/)[1]);
+};
 const ready = async page => {
   await page.goto(demo);
   await expect(page.locator('#main')).toHaveAttribute('data-scene', 'azul');
@@ -61,7 +66,8 @@ test('real spherical panorama, lazy second scene, selector, orientation and clea
   page.on('requestfailed', request => failedRequests.push(request.url()));
   page.on('request', request => { if (request.url().includes('/panoramas/')) panoramaRequests.push(request.url()); });
   await ready(page);
-  expect(panoramaRequests.filter(url => url.includes('ambar'))).toHaveLength(0);
+  const data = JSON.parse(await page.locator('#tour-data').textContent());
+  expect(panoramaRequests.some(url => url.endsWith(data.scenes[1].panorama))).toBe(false);
   await expect(page.locator('#info-panel')).toBeHidden();
   await expect(page.locator('audio')).toHaveCount(0);
   const geometry = await page.locator('#panorama-sky').evaluate(el => {
@@ -117,26 +123,52 @@ test('mouse looks all around and up/down without moving the camera', async ({ pa
   expect(rotations.position).toEqual([0, 0, 0]);
 });
 
-test('missing panorama reports an error and retry recovers', async ({ page }) => {
-  await page.route('**/panoramas/demo-azul.png', route => route.fulfill({ status: 404, body: 'Missing' }));
+test('missing panorama reports an error and retry recovers', async ({ page, request }) => {
+  const url = '**' + (await databaseTour(request)).scenes[0].panorama;
+  await page.route(url, route => route.fulfill({ status: 404, body: 'Missing' }));
   await page.goto(demo);
   await expect(page.getByRole('heading', { name: 'No pudimos abrir esta escena' })).toBeVisible();
   await expect(page.locator('#main')).toHaveAttribute('data-loading', 'error');
-  await page.unroute('**/panoramas/demo-azul.png');
+  await page.unroute(url);
   await page.getByRole('button', { name: 'Volver a intentar' }).click();
   await expect(page.locator('#main')).toHaveAttribute('data-scene', 'azul');
   await expect(page.locator('#viewer-status')).toBeHidden();
 });
 
-test('second scene load failure can recover while retaining current texture', async ({ page }) => {
+test('second scene load failure can recover while retaining current texture', async ({ page, request }) => {
   await ready(page);
-  await page.route('**/panoramas/demo-ambar.png', route => route.fulfill({ status: 404, body: 'Missing' }));
+  const url = '**' + (await databaseTour(request)).scenes[1].panorama;
+  await page.route(url, route => route.fulfill({ status: 404, body: 'Missing' }));
   await page.getByRole('combobox').selectOption('ambar');
   await expect(page.getByRole('heading', { name: 'No pudimos abrir esta escena' })).toBeVisible();
   await expect(page.locator('#main')).toHaveAttribute('data-scene', 'azul');
-  await page.unroute('**/panoramas/demo-ambar.png');
+  await page.unroute(url);
   await page.getByRole('button', { name: 'Volver a intentar' }).click();
   await expect(page.locator('#main')).toHaveAttribute('data-scene', 'ambar');
+});
+
+test('viewer honors inclusive panorama ratio limits and rejects an outside image', async ({ page, request }) => {
+  const url = '**' + (await databaseTour(request)).scenes[0].panorama;
+  await page.goto('/');
+  for (const width of [1980, 2020, 1979]) {
+    const base64 = await page.evaluate(width => {
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = 1000;
+      canvas.getContext('2d').fillRect(0, 0, width, 1000);
+      return canvas.toDataURL('image/png').split(',')[1];
+    }, width);
+    await page.route(url, route => route.fulfill({ contentType: 'image/png', body: Buffer.from(base64, 'base64') }));
+    await page.goto(demo);
+    if (width === 1979) {
+      await expect(page.getByRole('heading', { name: 'No pudimos abrir esta escena' })).toBeVisible();
+      await expect(page.locator('#main')).toHaveAttribute('data-loading', 'error');
+    } else {
+      await expect(page.locator('#main')).toHaveAttribute('data-scene', 'azul');
+      await expect(page.locator('#viewer-status')).toBeHidden();
+      expect(await page.locator('#panorama-sky').evaluate(el => el.getObject3D('mesh').material.map.image.naturalWidth)).toBe(width);
+    }
+    await page.unroute(url);
+  }
 });
 
 test('unsupported VR has a usable normal view and essential VR controls exist', async ({ page }) => {

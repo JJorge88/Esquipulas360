@@ -1,16 +1,116 @@
-# Mantener el contenido sin cambiar plantillas
+# Administrar lugares, escenas y puntos — fase 2
 
-`content/tours.json` contiene el catálogo. `content/site.json` contiene las imágenes de la portada del inicio. Django valida el catálogo en `manage.py check`, al iniciar el servidor y al leerlo para las páginas.
+El contenido de los recorridos se guarda en la base de datos y se edita desde `/admin/`. No es necesario cambiar plantillas ni JSON. La instalación y la creación del superusuario se describen en [README.md](../README.md).
 
-## Archivos
+## Recorridos y publicación
 
-El logo adjunto está copiado íntegramente en `static/images/logo.png`. Si se reemplaza, utiliza el archivo definitivo, conserva su proporción y el texto alternativo. El proyecto no lo redibuja.
+Cada recorrido tiene nombre, slug único, descripción, categoría, portada opcional, estado, destacado, orden y escena inicial. Las categorías tienen nombre y slug único. Conviene conservar los slugs publicados para mantener sus enlaces. La importación conserva `demostracion`, `mirador`, `basilica` y `parque-central`.
 
-Coloca las fotografías, panorámicas y audios reales en `media/`, excluido de Git. Crea las subcarpetas `covers/`, `panoramas/` y `audio/` según necesites. En desarrollo Django sirve `/media/` si `DJANGO_DEBUG=true`; en una publicación futura habría que servir estos archivos explícitamente. No añadas grandes archivos al repositorio.
+| Estado | Tarjeta pública | Visor | Requisitos |
+| --- | --- | --- | --- |
+| Borrador | No | 404, incluso por URL directa | Permite preparar escenas sin imagen |
+| Próximo | Sí | 404 | Permite preparar contenido sin publicarlo |
+| Demostración | Sí, identificada como técnica | Sí | Escena inicial propia, todas las panorámicas presentes y válidas |
+| Disponible | Sí | Sí | Los mismos controles de integridad |
 
-Las rutas en JSON son relativas: `media/panoramas/mirador-01.jpg` se resuelve a `/media/panoramas/mirador-01.jpg`. Las rutas sin prefijo `media/` se buscan en los estáticos; por ejemplo `panoramas/demo-azul.png`. No uses URLs externas, rutas absolutas ni `..`.
+La escena inicial y los destinos deben pertenecer al mismo recorrido en cualquier estado. No se admiten puntos que vuelvan a su propia escena. No se exige portada, un número mínimo de dos escenas ni un punto de retorno para publicar; revisa manualmente la navegación que quieras ofrecer. Para dos escenas conectadas, crea un punto en cada dirección.
 
-## Portada de inicio
+Inicio muestra hasta tres recorridos destacados que no sean demostraciones, por orden ascendente, después nombre y clave interna. Explorar muestra todos los recorridos públicos en ese orden. La primera demostración pública según ese orden alimenta los enlaces y la sección de demostración de Inicio. Las categorías sin recorridos públicos no aparecen como filtros.
+
+Guardar un recorrido publicado vuelve a validar todas sus panorámicas. Editar una escena publicada exige mantener su imagen válida; no se puede vaciar ni añadir una escena incompleta. Las escenas no se trasladan entre recorridos después de guardarse. No hay acciones masivas que eludan la validación para publicar.
+
+Para retirar o reorganizar escenas:
+
+1. Cambia el recorrido a **Borrador**.
+2. Cambia o vacía la escena inicial si vas a eliminarla.
+3. Elimina o redirige los puntos que llegan a la escena que retirarás.
+4. Elimina la escena, completa la nueva estructura y vuelve a publicar.
+
+Django protege los destinos y la escena inicial frente a eliminaciones que dejen referencias rotas. Eliminar un recorrido completo elimina sus registros de escenas y puntos; sus archivos permanecen en disco. En Admin, vuelve primero a borrador para poder confirmar la eliminación de todas sus escenas.
+
+Si alguien retira un original del disco fuera del administrador, la consulta pública oculta el recorrido afectado y su URL devuelve 404. Los errores de red al cargar una imagen en un visor ya abierto conservan el mensaje y el reintento de fase 1.
+
+## Crear dos escenas conectadas
+
+Crea un recorrido como Borrador. En **Escenas**, crea y guarda A y B, eligiendo el mismo recorrido y una panorámica para cada una. Luego vuelve a A y añade un punto hacia B en la tabla **Puntos de navegación**; guarda y repite desde B hacia A. Los destinos de esa tabla se limitan a las otras escenas del recorrido. También se pueden gestionar puntos desde su listado propio, que valida origen y destino.
+
+Configura orientación inicial 0° horizontal y 0° vertical en ambas escenas para comenzar. Un punto con posición 0°/0° aparece al frente. Introduce una etiqueta corta y descriptiva, por ejemplo «Ir al patio». El nombre, el texto informativo y las etiquetas son texto plano; escribir HTML no genera contenido activo.
+
+Vuelve al recorrido, selecciona A como escena inicial, elige estado y guarda. Si usas imágenes técnicas, marca **Demostración**. Los archivos generados `static/panoramas/demo-azul.png` y `demo-ambar.png` permiten practicar sin fotografías reales.
+
+## Orientación compatible con el visor
+
+Todos los ángulos se guardan en **grados**. Son referencias de la imagen, **no una brújula ni norte geográfico**.
+
+| Valor | Dirección |
+| --- | --- |
+| Horizontal (`yaw`) 0° | Frente, eje −Z |
+| Horizontal +90° | Izquierda, eje −X |
+| Horizontal −90° | Derecha, eje +X |
+| Horizontal ±180° | Atrás, eje +Z |
+| Vertical (`pitch`) 0° | Horizonte |
+| Vertical positiva | Arriba, hasta +90° |
+| Vertical negativa | Abajo, hasta −90° |
+
+La orientación de una **escena** indica hacia dónde mira inicialmente la cámara. Los ángulos de un **punto** ubican ese punto respecto de la imagen, no respecto del giro actual del visitante. El rango horizontal es −180° a +180°; el vertical, −90° a +90°. Se rechazan valores no finitos.
+
+Para transmitir puntos al visor se usan estas coordenadas con ángulos convertidos a radianes y radio `r = 3.5`:
+
+```text
+x = -r × sin(yaw) × cos(pitch)
+y =  r × sin(pitch)
+z = -r × cos(yaw) × cos(pitch)
+```
+
+Son unidades de la escena, no metros medidos. El importador convierte las coordenadas antiguas a ángulos conservando su dirección. En la demo, azul comienza a 0°/0°; ámbar a 90°/5°. La cabeza controla la inclinación durante VR; no se fuerza el `pitch` editorial en una sesión inmersiva.
+
+## Carga de imágenes
+
+Las portadas aceptan **JPEG (.jpg/.jpeg), PNG y WebP**. Las panorámicas aceptan **JPEG y PNG estáticos**. Se comprueba el formato real con Pillow, su coincidencia con la extensión, la integridad de los píxeles, dimensiones, peso y, en panorámicas, proporción. No se confía en el MIME enviado por el navegador. Archivos dañados, imágenes animadas y panorámicas que requieren giro EXIF se rechazan con errores de formulario.
+
+Valores predeterminados, configurables mediante `.env`:
+
+| Variable | Valor | Significado |
+| --- | --- | --- |
+| `COVER_MAX_BYTES` | 12582912 | 12 MiB por portada |
+| `COVER_MIN_WIDTH` | 320 | Ancho mínimo de portada |
+| `COVER_MIN_HEIGHT` | 180 | Alto mínimo de portada |
+| `PANORAMA_MAX_BYTES` | 20971520 | 20 MiB por panorámica |
+| `PANORAMA_MIN_WIDTH` | 1024 | Ancho mínimo de panorámica |
+| `PANORAMA_MIN_HEIGHT` | 512 | Alto mínimo de panorámica |
+| `IMAGE_MAX_DIMENSION` | 8192 | Máximo por lado para cualquier carga |
+| `IMAGE_MAX_PIXELS` | 33554432 | Máximo de píxeles totales, ancho × alto |
+| `PANORAMA_RATIO_TOLERANCE` | 0.01 | Tolerancia relativa del 1% alrededor de 2:1 |
+
+Se acepta `abs(ancho / (2 × alto) - 1) <= tolerancia`. Con 0.01, la relación ancho/alto admitida es **1.98 a 2.02**, incluidos ambos extremos. Los mínimos de dimensiones se siguen aplicando. La configuración admite tolerancia entre 0 y 0.05; `manage.py check` detecta límites no positivos y tolerancias fuera de rango. Reinicia el servidor después de cambiar límites.
+
+**La proporción 2:1 no garantiza por sí sola que una imagen sea esférica o equirectangular.** Debe cubrir 360° horizontal y 180° vertical en proyección equirectangular completa. Una fotografía plana estirada puede pasar la comprobación matemática y no sirve como panorama. Revisa visualmente horizonte, unión de los extremos, cenit y nadir. No se analiza automáticamente el contenido geográfico.
+
+Las demos se generan en PNG 2048 × 1024, de aproximadamente 40 KB cada una. Para fotografías reales, una exportación JPEG 4096 × 2048 es un punto de partida dentro de los límites; comprueba su calidad y rendimiento en el dispositivo. El visor sigue comprobando el límite de textura de la GPU y usa la misma tolerancia de proporción que el servidor.
+
+## Originales y miniaturas
+
+Las cargas se guardan con nombres UUID únicos en `media/covers/originals/` y `media/panoramas/originals/`. Se mantienen los bytes originales; subir dos archivos llamados igual o reemplazar una imagen no sobrescribe el archivo anterior.
+
+Se generan miniaturas WebP de hasta 640 × 360 para Admin y tarjetas, bajo `media/thumbnails/`. No sustituyen la panorámica del visor. El visor solicita la imagen de cada escena cuando se abre y libera la textura anterior; no precarga la segunda escena.
+
+No hay borrado automático de archivos al eliminar registros, quitar imágenes o reemplazarlas. Esto incluye miniaturas y posibles archivos huérfanos de una operación fallida: las transacciones de la base no revierten el sistema de archivos. Cualquier limpieza debe ser deliberada, con respaldo y comprobando antes las referencias. Conserva juntos la base y `media/`; ambos están excluidos de Git.
+
+## Importación y contenido heredado
+
+```sh
+.venv/bin/python manage.py migrate
+.venv/bin/python scripts/generate_panoramas.py
+.venv/bin/python manage.py import_phase1
+```
+
+No se carga ni descarga contenido en migraciones. El comando valida todos los archivos de los recorridos nuevos antes de escribir registros. Si faltan las imágenes técnicas, indica que hay que generarlas. Copia sus originales al almacenamiento de cargas y crea miniaturas. Es posible repetirlo sin duplicados ni cambios en recorridos ya existentes, incluso si se cambió su slug conservando la clave de importación.
+
+`content/tours.json` y `tours/legacy.py` son exclusivamente la fuente y el lector del importador. No se editan para mantener el catálogo diario. Los scripts que modifiquen modelos deben usar `save()` completo por instancia; las operaciones masivas y `update_fields` se bloquean porque omiten validación. No modifiques estas tablas mediante SQL directo.
+
+## Portada general e identidad
+
+El logo original sigue íntegro en `static/images/logo.png`. La portada general del Inicio mantiene la configuración de fase 1 en `content/site.json`, fuera de los campos de recorrido:
 
 ```json
 {
@@ -20,64 +120,4 @@ Las rutas en JSON son relativas: `media/panoramas/mirador-01.jpg` se resuelve a 
 }
 ```
 
-El contenido real debe corresponder a esa descripción. Prepara una vista amplia de **toda Esquipulas desde el mirador**: formato apaisado para computadora y un recorte vertical específico para celular. El elemento `<picture>` cambia de archivo a 640 px; `object-fit: cover` llena el espacio y una capa oscura mantiene legible el título. Sitúa los detalles esenciales fuera de la zona cubierta por el texto y verifica ambos tamaños. Si aún no hay imagen, conserva los campos en `null`; aparece el fondo abstracto con «imagen pendiente».
-
-## Recorridos
-
-Cada recorrido tiene `id`, `slug`, `name`, `description`, `category`, `cover`, `status`, `initial_scene` y `scenes`.
-
-| Campo | Reglas |
-| --- | --- |
-| `id`, `slug` | Únicos entre recorridos. Minúsculas ASCII, números y guiones; no espacios |
-| `name`, `description` | Texto real revisado, sin HTML necesario |
-| `category` | `demostracion`, `vistas`, `patrimonio` o `espacios` |
-| `cover` | Ruta relativa o `null`; se muestra una portada pendiente si falta |
-| `status` | `demo` para escenarios técnicos; `available` para recorridos reales preparados; `upcoming` para próximos |
-| `initial_scene` | ID de una escena del recorrido; `null` para próximos |
-| `scenes` | Lista de escenas; vacía para próximos |
-
-Para habilitar Mirador, añade escenas reales y su `initial_scene`, configura una portada y cambia `status` de `upcoming` a `available`. El catálogo mostrará «Disponible» y un enlace al visor automáticamente. Conserva la demostración separada e identificada: no la renombres como un lugar real para quitarle la advertencia.
-
-## Escenas y puntos
-
-```json
-{
-  "id": "vista-principal",
-  "name": "Vista principal",
-  "panorama": "media/panoramas/mirador-01.jpg",
-  "orientation": {"yaw": 0, "pitch": 0},
-  "text": "Descripción del contenido real, verificada antes de publicarse.",
-  "audio": null,
-  "hotspots": [
-    {"id": "a-segunda-vista", "label": "Ir a la segunda vista", "position": [0, 0, -3.5], "destination": "segunda-vista"}
-  ]
-}
-```
-
-Este fragmento necesita una segunda escena con ID `segunda-vista` en el mismo recorrido y un punto de retorno. Los ID de escena son únicos dentro del recorrido; los de puntos, dentro de la escena. `yaw` admite de −180 a 180 grados y `pitch` de −90 a 90. Cero mira al frente (`−Z`), yaw positivo gira a la izquierda y pitch positivo mira arriba. Los valores son referencias de la imagen, **no norte geográfico**.
-
-`position` contiene coordenadas `[x, y, z]` de la escena. Usa distancias cercanas a 3–5 unidades; el rayo tiene alcance de 15. No representan metros medidos. La cámara estacionaria arranca en el origen. Ejemplos: frente `[0, 0, -3.5]`, izquierda `[-3.5, 0, 0]`, derecha `[3.5, 0, 0]`, atrás `[0, 0, 3.5]`. Eleva `y` para subir un punto. La escena ámbar tiene yaw 90° y su punto está a la izquierda del origen, por lo que aparece al frente al entrar.
-
-Para un punto definido por yaw y pitch en radianes y una distancia `r`:
-
-```text
-x = -r × sin(yaw) × cos(pitch)
-y =  r × sin(pitch)
-z = -r × cos(yaw) × cos(pitch)
-```
-
-En VR se conserva la orientación natural de la cabeza; no se fuerza la inclinación de la cámara para evitar una rotación artificial. El giro inicial horizontal se aplica al conjunto de cámara/mandos. Valida comodidad, posición y legibilidad físicamente.
-
-## Panorámicas
-
-- Deben cubrir 360° horizontal y 180° vertical mediante proyección equirectangular completa **2:1**. Una imagen plana estirada no sirve.
-- Empieza con 4096 × 2048 JPG o WebP optimizado; comprueba calidad, peso y límites del dispositivo antes de subir resolución. El visor valida la proporción exacta y el tamaño máximo de textura disponible.
-- Las demos se regeneran con `.venv/bin/python scripts/generate_panoramas.py`: PNG 2048 × 1024 de aproximadamente 40 KB cada una.
-- El visor solicita una panorámica al entrar en su escena. Al sustituirla, libera textura, imagen y URL temporal; aborta solicitudes anteriores y limita su espera. Conserva la anterior si falla la siguiente, muestra un error y permite reintentar. En VR la recuperación está dentro del espacio 3D.
-- La miniatura de demostración del catálogo puede cargar la imagen pequeña para su tarjeta. El visor no precarga la segunda panorámica.
-
-Sin `audio` no se crea reproductor. Si se configura audio, usa archivo local y proporciona descripción; el reproductor requiere una acción del visitante, se detiene al cambiar de escena y al entrar en VR. Esta fase no ofrece audio inmersivo ni narración oficial.
-
-## Validación
-
-Después de modificar JSON, ejecuta `.venv/bin/python manage.py check` y `.venv/bin/python manage.py test`. Se validan ID, duplicados, categorías, estados, escenas iniciales, destinos, rutas relativas, orientaciones finitas y posiciones válidas. La existencia, decodificación y proporción de una imagen se comprueban al cargar el visor, con error recuperable si no es utilizable. Verifica manualmente las nuevas portadas y textos en celular y computadora.
+Estas imágenes generales se colocan manualmente en las rutas indicadas. El formulario y los validadores de cargas de Admin corresponden a portadas de recorridos y panorámicas, no a esta configuración general. Si aún no hay fotografía, conserva sus campos en `null`: aparece el diseño existente con «imagen pendiente». La imagen debe corresponder a su descripción; verifica el recorte en computadora y móvil. Esta fase no incorpora audio ni video.

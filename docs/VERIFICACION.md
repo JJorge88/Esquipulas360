@@ -1,13 +1,15 @@
-# Verificación de fase 1
+# Verificación de fase 2
 
 Entorno: macOS, Python 3.13, Django 5.2.17, Node.js 26 y Google Chrome controlado con Playwright. Las pruebas gráficas usan renderizado por software. Fecha local: 17 de septiembre de 2026.
 
 ## Ejecutado
 
 - `manage.py check`: sin incidencias.
-- `manage.py test`: **19 pruebas aprobadas** de rutas, 404, búsqueda, filtros, estados, escapado, resolución de archivos y validación del catálogo.
+- `makemigrations --check --dry-run`: sin cambios pendientes; migración inicial aplicada en la instalación local y en las bases vacías de pruebas.
+- `import_phase1` ejecutado dos veces en la instalación: cuatro recorridos, cuatro categorías, dos escenas y dos puntos; la segunda ejecución conservó todos sin duplicarlos.
+- `manage.py test`: **48 pruebas aprobadas** de modelos, cargas reales, permisos y formularios de Admin, publicación, importación y páginas públicas. Base de pruebas aislada y archivos temporales.
 - `npm run build`: compilación de Tailwind y preparación/verificación de recursos locales correctas.
-- `npm run test:e2e`: **12 pruebas de navegador aprobadas**. Se repitió la prueba móvil después de añadir la comprobación de inclinación táctil.
+- Navegador: **13 pruebas aprobadas**. Se ejecutaron las 12 pruebas de conservación con `npm run test:e2e` sobre la demostración importada y, después, una nueva prueba específica de tolerancia con `npx playwright test --grep "inclusive panorama"`. Las pruebas usan las URLs de archivos de la base, sin depender de nombres originales.
 - Sintaxis JavaScript comprobada con `node --check`.
 - Logo cotejado por SHA-256 con el adjunto: archivos idénticos.
 - Revisión visual de capturas de Inicio, Explorar y Visor en computadora y celular. Diseño sin desbordamiento horizontal en 360, 390 y 768 px; vista de escritorio de 1440 px.
@@ -15,7 +17,7 @@ Entorno: macOS, Python 3.13, Django 5.2.17, Node.js 26 y Google Chrome controlad
 | Comportamiento | Evidencia |
 | --- | --- |
 | Inicio, catálogo y demostración | HTTP 200 y navegación real en Chrome |
-| Slug inexistente o recorrido próximo | HTTP 404; página de error propia con DEBUG desactivado |
+| Slug inexistente, borrador o recorrido próximo | HTTP 404; página de error propia con DEBUG desactivado |
 | Búsqueda | `BASILICA`, `Basílica` y `basílica` encuentran Basílica |
 | Categorías combinadas | Búsqueda + Patrimonio produce un resultado; búsqueda + Vistas muestra estado vacío; restablecer recupera los cuatro |
 | Próximos | Tres tarjetas sin enlaces a un visor inexistente |
@@ -27,7 +29,7 @@ Entorno: macOS, Python 3.13, Django 5.2.17, Node.js 26 y Google Chrome controlad
 | Carga diferida | La segunda panorámica no se solicita antes de abrir su escena |
 | Recursos | Se observa `dispose` de la textura anterior al cambiar de escena |
 | Archivos ausentes | Respuesta 404 forzada para cada panorámica, mensaje de error y recuperación al reintentar |
-| Información y audio | Panel cerrado al inicio; abrir/cerrar con botones y Escape; no hay reproductor cuando falta audio |
+| Información | Panel cerrado al inicio; abrir/cerrar con botones y Escape; no se envían datos de audio al visor |
 | Pantalla completa | Entrada y salida mediante el botón de la aplicación |
 | VR no disponible | Mensaje claro y recorrido normal utilizable; se comprobó ausencia de API y navegador sin visor |
 | Permisos VR | API simulada: ninguna solicitud antes de pulsar el botón, evento automático ignorado, rechazo controlado y botón reutilizable |
@@ -36,13 +38,34 @@ Entorno: macOS, Python 3.13, Django 5.2.17, Node.js 26 y Google Chrome controlad
 
 Chrome puede emitir avisos del controlador gráfico sobre `ReadPixels` por usar renderizado de software. Son avisos del entorno de pruebas; no se presentan como validación de rendimiento de Quest.
 
-## Ajustes comprobados
+## Integridad y administración comprobadas
+
+| Área | Casos verificados |
+| --- | --- |
+| Permisos | Anónimo/no personal redirigido; personal sin permisos recibe 403; solo lectura no puede editar ni subir archivos; editor autorizado puede guardar y publicar |
+| Admin | Interfaz en español; carga y guardado de escenas; puntos dentro de la escena; errores de publicación y carga ligados al formulario; destinos de otro recorrido rechazados |
+| Imágenes | JPEG, PNG y WebP de portada; JPEG/PNG de panorama; archivo fingido, extensión incorrecta, truncado, animación y giro EXIF rechazados |
+| Límites | Peso, mínimos, máximo por lado, píxeles totales, proporción dentro/fuera de tolerancia y extremos incluidos. Chrome carga panorámicas 1980 × 1000 y 2020 × 1000, y rechaza 1979 × 1000 |
+| Relaciones | Escena inicial y destinos del mismo recorrido; prohibición de trasladar escenas y de puntos a su propio origen; ángulos finitos y acotados |
+| Publicación | Escena inicial y todas las imágenes requeridas; archivo ausente o corrupto impide publicar; no se permite vaciar ni añadir una escena incompleta en un recorrido publicado |
+| Eliminación | Escenas publicadas protegidas individualmente y en lote; destino referenciado protegido en borrador; eliminación completa del recorrido con conexiones de ida y vuelta sin referencias rotas |
+| Archivos | Originales byte a byte, nombres únicos, miniaturas pequeñas, reemplazos y eliminaciones conservan archivos anteriores |
+| Importación | Repetición sin duplicados; cambios de nombre, slug, estado y texto, además de puntos eliminados, preservados; archivos faltantes no dejan registros parcialmente importados |
+| Contenido público | Lectura desde base, orden/destacado, cambios editoriales visibles, borradores ocultos también en enlaces y categorías, próximos sin visor, estados vacíos |
+| Datos del visor | Solo contrato público necesario; sin clave de importación ni audio; texto que intenta cerrar el elemento script correctamente escapado |
+| Navegación esférica | Conversión de ángulos compatible con los ejes y cambio real azul → ámbar → azul en Chrome |
+
+Se revisó visualmente el acceso nativo a Admin en español. Los formularios autenticados y permisos se comprobaron mediante el cliente HTTP de Django; no se creó una cuenta con contraseña predeterminada en la instalación local. Las migraciones y el importador no crean usuarios.
+
+## Funciones conservadas de fase 1
 
 Se corrigió el orden de inicialización de la cámara en móviles: `look-controls` se activa cuando la escena ya dispone de su componente de permisos. Se desactivó explícitamente la interfaz predeterminada de A-Frame 1.8 después de su inicialización, para dejar solo los controles de la aplicación. La entrada automática por `sessiongranted` se ignora; la aplicación solicita VR únicamente desde su botón.
 
 Los gestos nativos de A-Frame solo cambian el giro horizontal. El proyecto añade inclinación vertical con un dedo, limitada a ±90°, sin solicitar acceso a sensores y sin aplicarla durante una sesión inmersiva. Los cambios de escena cancelan cargas anteriores y liberan los recursos sustituidos.
 
 ## Pendiente de comprobación física
+
+El usuario confirmó previamente que puede mirar alrededor desde su navegador.
 
 **No se utilizó un Meta Quest 2 físico. No se declara probado en Quest 2.** La existencia de controles y la simulación de rechazos WebXR no prueban el funcionamiento del seguimiento ni de los mandos.
 

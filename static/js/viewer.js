@@ -232,7 +232,8 @@
       await image.decode();
       if (ticket !== generation) return;
       if (requestController.signal.aborted) throw new Error('Tiempo de carga agotado.');
-      if (image.naturalWidth !== image.naturalHeight * 2) throw new Error('La panorámica debe tener proporción 2:1.');
+      const tolerance = tour.panorama_ratio_tolerance ?? 0;
+      if (Math.abs(image.naturalWidth / (image.naturalHeight * 2) - 1) > tolerance + 1e-12) throw new Error('La panorámica debe tener proporción 2:1 dentro de la tolerancia configurada.');
       if (image.naturalWidth > scene.renderer.capabilities.maxTextureSize) throw new Error('La panorámica supera la resolución admitida por este dispositivo.');
       texture = new THREE.Texture(image);
       texture.colorSpace = THREE.SRGBColorSpace;
