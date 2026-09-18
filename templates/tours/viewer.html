@@ -1,0 +1,26 @@
+{% extends 'base.html' %}{% load static %}
+{% block title %}{{ tour.name }} · Esquipulas 360°{% endblock %}
+{% block body_class %}viewer-page{% endblock %}
+{% block header %}{% endblock %}{% block footer %}{% endblock %}
+{% block head %}<script src="{% static 'vendor/aframe/aframe.min.js' %}" defer></script><script src="{% static 'js/viewer.js' %}" defer></script>{% endblock %}
+{% block content %}
+<main id="main" class="viewer-shell" aria-label="Visor panorámico">
+  <a-scene id="panorama-scene" embedded xr-mode-ui="enabled: false" loading-screen="enabled: false" device-orientation-permission-ui="enabled: false" renderer="colorManagement: true; antialias: true" webxr="referenceSpaceType: local" background="color: #132238" cursor="rayOrigin: mouse; fuse: false" raycaster="objects: .hotspot; far: 15">
+    <a-sky id="panorama-sky" radius="50" segments-width="64" segments-height="32" color="#132238" rotation="0 -90 0"></a-sky>
+    <a-entity id="hotspots"></a-entity>
+    <a-entity id="camera-rig" position="0 0 0">
+      <a-entity id="tour-camera" camera="active: true; near: 0.05; far: 100" position="0 0 0"></a-entity>
+      <a-entity id="left-controller" laser-controls="hand: left; model: false" raycaster="objects: .vr-clickable; far: 15" line="color: #fece57"></a-entity>
+      <a-entity id="right-controller" laser-controls="hand: right; model: false" raycaster="objects: .vr-clickable; far: 15" line="color: #fece57"></a-entity>
+      <a-entity id="vr-navigation" position="0 -0.85 -2.5" visible="false"></a-entity>
+    </a-entity>
+  </a-scene>
+  <header class="viewer-top"><a class="viewer-back" href="{% url 'explore' %}" aria-label="Volver a explorar"><span aria-hidden="true">←</span> Volver a explorar</a><div class="viewer-top-title"><h1>{{ tour.name }}</h1>{% if tour.status == 'demo' %}<p>Demostración técnica — no representa un lugar real</p>{% endif %}</div><div class="viewer-tools"><button id="info-toggle" class="viewer-icon" type="button" aria-label="Información del recorrido" aria-expanded="false" aria-controls="info-panel">ⓘ</button><button id="fullscreen" class="viewer-icon" type="button" aria-label="Pantalla completa" aria-pressed="false">⛶</button></div></header>
+  <aside id="info-panel" class="viewer-info" hidden aria-labelledby="info-title"><button id="info-close" class="close-panel" type="button" aria-label="Cerrar información">×</button><h2 id="info-title">Sobre esta escena</h2><p id="scene-description"></p><div id="audio-container"></div><p>Arrastra para mirar. Usa los puntos o el selector para cambiar de escena. En VR, apunta con un mando y pulsa el gatillo.</p><p>Las marcas de la demostración indican ángulos de prueba, no direcciones geográficas.</p></aside>
+  <div class="viewer-bottom"><div class="viewer-scene-control"><span id="scene-counter" class="scene-counter">01 / {{ tour.scenes|length|stringformat:'02d' }}</span><div><label for="scene-select">ESTÁS EXPLORANDO</label><select id="scene-select" aria-label="Seleccionar escena">{% for scene in tour.scenes %}<option value="{{ scene.id }}">{{ scene.name }}</option>{% endfor %}</select></div><button id="next-hotspot" class="scene-next" type="button">Ir a la siguiente escena ↗</button></div><p class="viewer-hint">↔ Arrastra para mirar a tu alrededor</p><div class="viewer-vr"><button id="enter-vr" type="button" disabled>Comprobando VR…</button><p id="vr-message" role="status">Puedes explorar en pantalla normal.</p></div></div>
+  <section id="viewer-status" class="viewer-status" aria-live="polite" aria-busy="true"><div class="viewer-status-card"><div id="loading-ring" class="loading-ring" aria-hidden="true"></div><h2 id="status-title">Abriendo otra perspectiva…</h2><p id="status-message">Cargando la escena panorámica.</p><button id="retry" class="button button-gold" type="button" hidden>Volver a intentar</button><a href="{% url 'explore' %}">Volver a explorar</a></div></section>
+  <p id="viewer-toast" class="viewer-toast" role="status" hidden></p>
+  <noscript><div class="viewer-noscript"><h1>Activa JavaScript para explorar en 360°.</h1><p>El visor necesita JavaScript y WebGL.</p><a class="button button-gold" href="{% url 'explore' %}">Volver a explorar</a></div></noscript>
+  {{ tour_data|json_script:"tour-data" }}
+</main>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends 'base.html' %}{% load static %}
+{% block content %}
+<main id="main">
+  <section class="hero wrap" aria-labelledby="hero-title">
+    {% if site.hero_desktop_url %}<picture class="hero-photo">{% if site.hero_mobile_url %}<source media="(max-width: 640px)" srcset="{{ site.hero_mobile_url }}">{% endif %}<img src="{{ site.hero_desktop_url }}" alt="{{ site.hero_alt }}" fetchpriority="high"></picture>{% else %}<div class="hero-art" aria-hidden="true"><div class="orbital orbital-one"></div><div class="orbital orbital-two"></div><div class="orbital orbital-three"></div><span class="hero-360">360<span>°</span></span><span class="art-coordinate">UNA CIUDAD · INFINITAS MIRADAS</span></div>{% endif %}
+    <div class="hero-shade"></div>
+    <div class="hero-content">
+      <p class="eyebrow hero-eyebrow"><span></span> ESQUIPULAS, GUATEMALA</p>
+      <h1 id="hero-title">Descubre Esquipulas <br>como si<br><em>estuvieras aquí.</em></h1>
+      <p class="hero-description">Acércate a sus lugares, cambia de perspectiva<br class="desktop-only"> y empieza a explorar a tu propio ritmo.</p>
+      <div class="hero-actions"><a class="button button-gold" href="{% url 'explore' %}">Explorar lugares <span aria-hidden="true">↗</span></a><a class="hero-demo" href="{% url 'viewer' 'demostracion' %}"><span class="play-icon" aria-hidden="true">▷</span> Ver demostración</a></div>
+    </div>
+    <div class="anniversary"><strong>58</strong><span>AÑOS COMO CIUDAD</span><small>1968 — 2026</small></div>
+    <div class="hero-bottom"><span><span aria-hidden="true">◎</span> {% if site.hero_desktop_url %}Una mirada a Esquipulas{% else %}Vista desde el mirador · imagen pendiente{% endif %}</span><span>DESLIZA PARA DESCUBRIR <span aria-hidden="true">↓</span></span></div>
+  </section>
+
+  <div class="intro-strip wrap"><p>Una ciudad de siempre.<br><strong>Una forma nueva de vivirla.</strong></p><div><span class="strip-icon" aria-hidden="true">◎</span><span>Explora en 360°</span></div><div><span class="strip-icon" aria-hidden="true">↗</span><span>Desde donde estés</span></div><div><span class="strip-icon" aria-hidden="true">◇</span><span>A tu propio ritmo</span></div></div>
+
+  <section class="section wrap" aria-labelledby="places-title">
+    <div class="section-heading"><div><p class="eyebrow">EL SIGUIENTE DESTINO ESTÁ CERCA</p><h2 id="places-title">Mucho por descubrir.</h2></div><a class="text-link" href="{% url 'explore' %}">Ver todos los lugares <span aria-hidden="true">↗</span></a></div>
+    <p class="section-intro">Estamos preparando nuevas miradas de Esquipulas. Estos son los primeros lugares previstos.</p>
+    <div class="cards-grid">{% for tour in places %}{% include 'partials/tour_card.html' %}{% endfor %}</div>
+  </section>
+
+  <section class="demo-feature wrap" aria-labelledby="demo-title">
+    <div class="demo-visual"><div class="demo-grid" aria-hidden="true"></div><span class="demo-label">ESPACIO DE PRUEBA</span><div class="demo-orb" aria-hidden="true"><span>360°</span></div><span class="demo-visual-caption">DOS ESCENAS · UNA NUEVA PERSPECTIVA</span></div>
+    <div class="demo-copy"><p class="eyebrow">LA CURIOSIDAD ES EL PRIMER PASO</p><h2 id="demo-title">Antes de viajar,<br><em>da una vuelta.</em></h2><p>Prueba cómo se siente mirar en todas las direcciones y pasar de una escena a otra.</p><p class="demo-disclaimer"><span aria-hidden="true">ⓘ</span> Demostración técnica — no representa un lugar real.</p><a class="button button-navy" href="{% url 'viewer' 'demostracion' %}">Iniciar demostración <span aria-hidden="true">↗</span></a></div>
+  </section>
+
+  <section class="section wrap how-section" id="como-funciona" aria-labelledby="how-title"><div class="section-heading"><div><p class="eyebrow">SIN PRISA. SIN COMPLICACIONES.</p><h2 id="how-title">Así de fácil.</h2></div><p>Solo necesitas un poco de curiosidad.</p></div><div class="steps-grid"><article><span class="step-number">01</span><h3>Elige tu lugar</h3><p>Encuentra un recorrido disponible en el catálogo. Por ahora, empieza por la demostración.</p></article><article><span class="step-number">02</span><h3>Mira a tu alrededor</h3><p>Arrastra con el ratón o desliza el dedo. Puedes mirar arriba, abajo y dar una vuelta completa.</p></article><article><span class="step-number">03</span><h3>Sigue tu curiosidad</h3><p>Toca los puntos interactivos para cambiar de escena y descubrir otra perspectiva.</p></article></div></section>
+
+  <section class="vr-banner wrap" aria-labelledby="vr-title"><div class="vr-symbol" aria-hidden="true">◉ — ◉</div><div><p class="eyebrow">UNA MIRADA MÁS INMERSIVA</p><h2 id="vr-title">¿Tienes un visor de realidad virtual?</h2><p>Abre la experiencia desde su navegador. Si admite WebXR, podrás entrar en VR y seleccionar puntos con los mandos. También puedes explorar desde tu celular o computadora.</p><a class="text-link" href="{% url 'viewer' 'demostracion' %}">Probar compatibilidad en la demostración <span aria-hidden="true">↗</span></a></div><span class="vr-tag">Preparado para pruebas<br><strong>con Meta Quest 2</strong></span></section>
+</main>
+{% endblock %}

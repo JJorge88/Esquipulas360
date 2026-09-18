@@ -1,0 +1,22 @@
+{
+  "name": "esquipulas-360",
+  "version": "0.1.0",
+  "private": true,
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "assets": "node scripts/copy-assets.mjs",
+    "build:css": "tailwindcss -i assets/css/input.css -o static/css/app.css --minify",
+    "build": "npm run assets && npm run build:css",
+    "dev:css": "tailwindcss -i assets/css/input.css -o static/css/app.css --watch",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@fontsource-variable/playfair-display": "5.3.0",
+    "@fontsource-variable/plus-jakarta-sans": "5.3.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@tailwindcss/cli": "4.3.3",
+    "tailwindcss": "4.3.3"
+  }
+}

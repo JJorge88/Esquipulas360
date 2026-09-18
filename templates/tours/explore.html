@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Explorar lugares · Esquipulas 360°{% endblock %}
+{% block content %}
+<main id="main" class="wrap explore-page">
+  <div class="breadcrumbs"><a href="{% url 'home' %}">Inicio</a><span aria-hidden="true">/</span><span>Explorar</span></div>
+  <section class="catalog-heading"><div><p class="eyebrow">TU PRÓXIMA PERSPECTIVA</p><h1>Cada lugar,<br><em>una nueva mirada.</em></h1></div><p>Explora Esquipulas a tu ritmo.<br>Mientras llegan las primeras panorámicas,<br class="desktop-only"> descubre la experiencia de demostración.</p></section>
+  <form method="get" action="{% url 'explore' %}" class="catalog-filters" role="search" aria-label="Buscar recorridos">
+    <div class="search-row"><label for="search" class="sr-only">Buscar un lugar o recorrido</label><span aria-hidden="true">⌕</span><input id="search" type="search" name="q" maxlength="200" value="{{ query }}" placeholder="¿Qué te gustaría descubrir?" autocomplete="off"><button class="button button-navy" type="submit" name="categoria" value="{{ category }}">Buscar <span aria-hidden="true">↗</span></button></div>
+    <div class="category-list" aria-label="Filtrar por categoría"><button class="filter-chip {% if not category %}active{% endif %}" type="submit" name="categoria" value="" aria-pressed="{% if not category %}true{% else %}false{% endif %}">Todos los lugares</button>{% for value, label in categories %}<button class="filter-chip {% if category == value %}active{% endif %}" type="submit" name="categoria" value="{{ value }}" aria-pressed="{% if category == value %}true{% else %}false{% endif %}">{{ label }}</button>{% endfor %}</div>
+  </form>
+  <div class="catalog-meta" role="status"><p><strong>{{ result_count }}</strong> recorrido{{ result_count|pluralize:"s" }}{% if query %} para «{{ query }}»{% endif %}</p>{% if query or category %}<a class="text-link" href="{% url 'explore' %}">Restablecer filtros <span aria-hidden="true">↺</span></a>{% else %}<span>Estamos construyendo nuevas perspectivas</span>{% endif %}</div>
+  {% if tours %}<section class="cards-grid catalog-grid" aria-label="Catálogo de recorridos">{% for tour in tours %}{% include 'partials/tour_card.html' %}{% endfor %}</section>{% else %}<section class="empty-state"><span aria-hidden="true">⌕</span><h2>Aún no encontramos esa mirada.</h2><p>Prueba con otro nombre o cambia la categoría.</p><a class="button button-navy" href="{% url 'explore' %}">Restablecer búsqueda <span aria-hidden="true">↗</span></a></section>{% endif %}
+  <aside class="catalog-note"><span aria-hidden="true">ⓘ</span><p><strong>Un proyecto que está comenzando.</strong> Los lugares marcados como próximos todavía no tienen recorridos. La demostración usa escenarios técnicos y no representa un lugar real.</p></aside>
+</main>
+{% endblock %}

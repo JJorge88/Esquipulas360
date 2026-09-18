@@ -1,0 +1,8 @@
+import json
+from django.conf import settings
+from .content import asset_url
+
+def site_settings(request):
+    with (settings.BASE_DIR / "content" / "site.json").open(encoding="utf-8") as source:
+        site = json.load(source)
+    return {"site": {**site, "hero_desktop_url": asset_url(site["hero_desktop"]) if site.get("hero_desktop") else None, "hero_mobile_url": asset_url(site["hero_mobile"]) if site.get("hero_mobile") else None}}

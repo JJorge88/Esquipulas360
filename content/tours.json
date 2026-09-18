@@ -1,0 +1,26 @@
+[
+  {
+    "id": "demo", "slug": "demostracion", "name": "Tu primera vuelta en 360°",
+    "description": "Dos escenarios de prueba para mirar alrededor, cambiar de punto y descubrir cómo funciona la experiencia.",
+    "category": "demostracion", "cover": "panoramas/demo-azul.png", "status": "demo", "initial_scene": "azul",
+    "scenes": [
+      {
+        "id": "azul", "name": "Escena azul", "panorama": "panoramas/demo-azul.png",
+        "orientation": {"yaw": 0, "pitch": 0},
+        "text": "Demostración técnica — no representa un lugar real. La cuadrícula permite comprobar el giro de 360°, el horizonte y la vista hacia arriba y abajo. Las marcas son referencias de la escena, no del norte geográfico.",
+        "audio": null,
+        "hotspots": [{"id": "a-ambar", "label": "Ir a escena ámbar", "position": [0, 0, -3.5], "destination": "ambar"}]
+      },
+      {
+        "id": "ambar", "name": "Escena ámbar", "panorama": "panoramas/demo-ambar.png",
+        "orientation": {"yaw": 90, "pitch": 5},
+        "text": "Segunda escena técnica, con una orientación inicial diferente. Selecciona el punto interactivo para regresar a la escena azul. También puedes usar el selector de escenas.",
+        "audio": null,
+        "hotspots": [{"id": "a-azul", "label": "Volver a escena azul", "position": [-3.5, 0.25, 0], "destination": "azul"}]
+      }
+    ]
+  },
+  {"id": "mirador", "slug": "mirador", "name": "Mirador", "description": "Una vista amplia de Esquipulas. Estamos preparando las panorámicas de este lugar.", "category": "vistas", "cover": null, "status": "upcoming", "initial_scene": null, "scenes": []},
+  {"id": "basilica", "slug": "basilica", "name": "Basílica", "description": "Un lugar para descubrir en 360°. Su recorrido y contenido están en preparación.", "category": "patrimonio", "cover": null, "status": "upcoming", "initial_scene": null, "scenes": []},
+  {"id": "parque-central", "slug": "parque-central", "name": "Parque Central", "description": "Otra perspectiva de la ciudad. Pronto podrás explorar este espacio a tu ritmo.", "category": "espacios", "cover": null, "status": "upcoming", "initial_scene": null, "scenes": []}
+]

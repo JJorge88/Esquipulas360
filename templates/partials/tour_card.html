@@ -1,0 +1,13 @@
+<article class="tour-card" data-status="{{ tour.status }}">
+  <div class="card-image card-image-{{ tour.category }}">
+    {% if tour.cover_url %}<img src="{{ tour.cover_url }}" alt="{% if tour.status == 'demo' %}Cuadrícula de la demostración técnica{% else %}{{ tour.name }}{% endif %}" loading="lazy" width="640" height="400">{% else %}<span class="placeholder-orbit" aria-hidden="true"></span><span class="placeholder-name" aria-hidden="true">{% if tour.category == 'vistas' %}Una nueva<br>perspectiva.{% elif tour.category == 'patrimonio' %}Un lugar para<br>redescubrir.{% else %}La ciudad<br>nos encuentra.{% endif %}</span>{% endif %}
+    <span class="status-badge status-{{ tour.status }}"><span aria-hidden="true">{% if tour.status == 'upcoming' %}◷{% else %}●{% endif %}</span> {{ tour.status_label }}</span>
+    <span class="image-caption">{% if tour.status == 'demo' %}Escenario técnico · 2 escenas{% elif tour.cover_url %}{{ tour.category_label }}{% else %}Fotografía pendiente{% endif %}</span>
+  </div>
+  <div class="card-body">
+    <p class="eyebrow">{{ tour.category_label }}</p>
+    <h3>{{ tour.name }}</h3>
+    <p>{{ tour.description }}</p>
+    {% if tour.status == 'upcoming' %}<div class="card-bottom muted"><span>Recorrido en preparación</span><span aria-hidden="true">◷</span></div>{% else %}<a class="card-bottom text-link" href="{% url 'viewer' tour.slug %}">{% if tour.status == 'demo' %}Abrir demostración{% else %}Explorar recorrido{% endif %}<span aria-hidden="true">↗</span></a>{% endif %}
+  </div>
+</article>

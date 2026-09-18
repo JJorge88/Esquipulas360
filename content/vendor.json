@@ -1,0 +1,8 @@
+{
+  "name": "A-Frame",
+  "version": "1.8.0",
+  "url": "https://aframe.io/releases/1.8.0/aframe.min.js",
+  "sha256": "27a49c530c18c0710f5d0b9492934d5ba6670fe492be37a5e5ea890f26a9864f",
+  "license": "MIT",
+  "source": "https://github.com/aframevr/aframe/tree/v1.8.0"
+}

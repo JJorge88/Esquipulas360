@@ -1,0 +1,23 @@
+{% load static %}
+<!doctype html>
+<html lang="es-GT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#132238">
+  <meta name="description" content="Una nueva forma de explorar Esquipulas, Guatemala. Descubre los próximos recorridos panorámicos y prueba nuestra demostración en 360°.">
+  <title>{% block title %}Esquipulas 360° · Una ciudad, nuevas perspectivas{% endblock %}</title>
+  <link rel="icon" href="{% static 'images/logo.png' %}" type="image/png">
+  <link rel="apple-touch-icon" href="{% static 'images/logo.png' %}">
+  <link rel="preload" href="{% static 'vendor/fonts/plus-jakarta-sans-latin-wght-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <script src="{% static 'js/site.js' %}" defer></script>
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+<a class="skip-link" href="#main">Saltar al contenido</a>
+{% block header %}{% include 'partials/header.html' %}{% endblock %}
+{% block content %}{% endblock %}
+{% block footer %}{% include 'partials/footer.html' %}{% endblock %}
+</body>
+</html>

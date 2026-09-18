@@ -1,0 +1,14 @@
+{% load static %}
+<header class="site-header wrap">
+  <a class="brand" href="{% url 'home' %}" aria-label="Esquipulas 360°, inicio">
+    <img src="{% static 'images/logo.png' %}" width="88" height="88" alt="Esquipulas 360°" fetchpriority="high">
+    <span class="brand-caption">Una ciudad.<br><strong>Nuevas perspectivas.</strong></span>
+  </a>
+  <button id="menu-toggle" class="icon-button menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav" aria-label="Abrir menú"><span class="menu-lines" aria-hidden="true"></span></button>
+  <nav id="main-nav" class="main-nav" aria-label="Navegación principal">
+    <a href="{% url 'home' %}" {% if request.resolver_match.url_name == 'home' %}aria-current="page"{% endif %}>Inicio</a>
+    <a href="{% url 'explore' %}" {% if request.resolver_match.url_name == 'explore' %}aria-current="page"{% endif %}>Explorar</a>
+    <a href="{% url 'home' %}#como-funciona">Así de fácil</a>
+    <a class="button button-outline nav-cta" href="{% url 'viewer' 'demostracion' %}">Probar experiencia <span aria-hidden="true">↗</span></a>
+  </nav>
+</header>
