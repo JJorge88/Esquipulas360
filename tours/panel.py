@@ -57,7 +57,7 @@ def panel_access(view):
 def context(request, **extra):
     capabilities = {f"{operation}_{model}": allowed(request.user, model, operation)
                     for model in ("tour", "scene", "category") for operation in ("view", "add", "change", "delete")}
-    return {"panel_permissions": capabilities, "can_preview": editor.can_preview(request.user),
+    return {"can_stand": any(request.user.has_perm(f"stand.{action}_standsession") for action in ("view", "add", "change")), "panel_permissions": capabilities, "can_preview": editor.can_preview(request.user),
             "can_edit_points": editor.can_edit(request.user), **extra}
 
 

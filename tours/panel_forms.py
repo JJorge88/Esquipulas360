@@ -10,11 +10,11 @@ from .models import Category, Scene, Tour
 
 
 def authorized(user):
-    return user.is_active and user.is_staff and any(
+    return user.is_active and user.is_staff and (any(
         user.has_perm(f"tours.{action}_{model}")
         for model in ("tour", "category", "scene", "navigationpoint")
         for action in ("view", "add", "change", "delete")
-    )
+    ) or any(user.has_perm(f"stand.{action}_standsession") for action in ("view", "add", "change")))
 
 
 class PanelAuthenticationForm(AuthenticationForm):

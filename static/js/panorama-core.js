@@ -76,5 +76,34 @@
     scene.canvas.addEventListener('touchend', endTouch);
     scene.canvas.addEventListener('touchcancel', endTouch);
   }
-  window.PanoramaTools = { position, angles, setOrientation, currentOrientation, touchPitch };
+  function worldQuaternion(scene) {
+    const result = new THREE.Quaternion();
+    if (scene.renderer.xr.isPresenting) {
+      // Sample after rendering (tock). WebXRManager has already composed the tracked
+      // head pose with the camera parent's world transform, including our rig.
+      // Do not apply the rig again or read look-controls Euler angles in immersive VR.
+      const xrCamera = scene.renderer.xr.getCamera();
+      const rotation = new THREE.Matrix4().extractRotation(xrCamera.matrixWorld);
+      return result.setFromRotationMatrix(rotation).normalize();
+    }
+    scene.camera.getWorldQuaternion(result);
+    return result.normalize();
+  }
+  AFRAME.registerComponent('stand-transition', {
+    schema: { active: { default: false } },
+    init() {
+      this.opacity = 0;
+      this.veil = new THREE.Mesh(new THREE.SphereGeometry(.4, 24, 16), new THREE.MeshBasicMaterial({color: '#132238', side: THREE.BackSide, transparent: true, opacity: 0, depthTest: false, depthWrite: false}));
+      this.veil.renderOrder = 1000;
+      this.el.camera.add(this.veil);
+    },
+    tick(time, delta) {
+      const target = this.data.active ? 1 : 0;
+      this.opacity += THREE.MathUtils.clamp(target - this.opacity, -delta / 160, delta / 160);
+      this.veil.material.opacity = this.opacity;
+      this.veil.visible = this.opacity > .001;
+    },
+    remove() { this.veil.removeFromParent(); this.veil.geometry.dispose(); this.veil.material.dispose(); }
+  });
+  window.PanoramaTools = { position, angles, setOrientation, currentOrientation, touchPitch, worldQuaternion };
 })();

@@ -1,0 +1,2 @@
+{% extends 'base.html' %}{% load static %}{% block header %}{% endblock %}{% block footer %}{% endblock %}{% block head %}<link rel="stylesheet" href="{% static 'css/stand.css' %}"><meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block content %}<main id="main" class="stand-join"><div class="stand-join-card"><img src="{% static 'images/logo.png' %}" alt="Esquipulas 360°"><h1>Sesión no disponible</h1><p>{{ reason }}</p><a href="{% url 'stand:join' %}">Vincular un visor</a></div></main>{% endblock %}

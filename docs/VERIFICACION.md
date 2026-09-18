@@ -118,3 +118,15 @@ Cuando se disponga del visor y de un origen HTTPS válido:
 8. Validar recorte de portada y tamaño/calidad de las panorámicas reales cuando existan.
 
 También quedan pendientes pruebas en Safari/iPhone, otros navegadores y dispositivos físicos móviles. La comprobación de celular documentada aquí es emulación de Chrome, no una prueba en un teléfono real. Las fotografías y las referencias Stitch no se recibieron; no se presenta una comparación visual con ellas.
+
+## Fase 5 · Stand (18 de septiembre de 2026)
+
+- `manage.py check` y `makemigrations --check --dry-run`: sin incidencias ni migraciones pendientes de generar. `stand/0001_initial` aplicada a la instalación local tras un respaldo de SQLite.
+- **118 pruebas Django:** las 96 anteriores y 22 nuevas de stand, con base/archivos temporales y claves Redis aisladas. Incluyen permisos/propietario, CSRF, acceso público limitado, caducidad/renovación/uso único del código, dos vinculaciones simultáneas, limitación de intentos, confirmación de carga, secuencias obsoletas, idempotencia, carrera operador/visitante, cambio de recorrido, reinicio, errores, borradores, fin/expiración y rotación de espectador.
+- **WebSockets del servidor:** origen hostil rechazado, credenciales de otro rol rechazadas, solo un visor activo, espectador sin escritura, eventos no autorizados/no finitos rechazados, última pose con TTL y revocación del operador tras cerrar sesión Django.
+- **7 pruebas de stand en Chrome** con ASGI + Redis real: operador, visitante y TV en contextos independientes; códigos caducados/usados; navegación bidireccional, cambio de recorrido, ACK después de cargar; mirada sincronizada y cruce ±180°; corte/restauración de red por CDP, conservación de imagen y recuperación del último estado; error/reintento de archivo y pérdida de gráficos simulada sin falsa confirmación; roles, finalización y credenciales invalidadas; pantallas adaptables y reapertura real del espectador. Ninguna orden inicia WebXR remotamente.
+- **Regresión en Chrome:** 13 pruebas públicas, 7 del editor y 7 del panel aprobadas. Compilación de recursos aprobada. No se cambiaron las versiones de las dependencias que existían antes de esta fase.
+- Se revisaron capturas del operador, participante y espectador; los archivos están en `artifacts/phase5/`. Las capturas usan escenas técnicas de demostración y una cuenta temporal, no contenido o credenciales nuevas en la instalación real.
+- Comparación de la base local con el respaldo anterior: categorías, recorridos, escenas, puntos, usuarios y asignaciones de grupos/permisos conservados. El logo mantiene su SHA-256. La base local no contiene sesiones creadas por las pruebas.
+
+La prueba de extracción de pose WebXR usa una cámara y matrices simuladas, con transformado del rig y rotaciones de cabeza. **No se utilizó un Quest 2 físico ni se validó orientación inmersiva real, seguimiento de mandos, latencia, comodidad o la televisión del evento.** Tampoco se configuró/publicó HTTPS ni se abrió un túnel. La prueba física pendiente y los comandos de servicios se detallan en [STAND.md](STAND.md).

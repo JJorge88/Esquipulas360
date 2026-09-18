@@ -74,3 +74,18 @@ No se modificaron el logo, los estilos de la identidad, las dependencias JavaScr
 | Documentación | Nueva `docs/EDITOR_VISUAL.md`; actualizados README, contenido, verificación e inventario |
 
 No hay cambios de modelos, migraciones, versiones de dependencias, logo, rutas públicas ni contenido persistido. Los datos del editor de prueba se crean en una base temporal; sus capturas/reportes y manifiesto de sesión efímera se excluyen de Git.
+
+## Cambios de fase 5
+
+| Área | Archivos nuevos o modificados |
+| --- | --- |
+| Sesión y protocolo | Nueva aplicación `stand/`: modelos, servicios, consumidores WebSocket, vistas, URLs y migración `0001_initial` |
+| Transporte y servicios | `config/asgi.py`, `config/settings.py`, `config/urls.py`, `compose.stand.yml`, `.env.example` |
+| Acceso desde el panel | `tours/panel.py`, `tours/panel_forms.py`, `tours/context.py`, `templates/panel/base.html` |
+| Tres roles | Nuevas plantillas `templates/stand/`, `static/css/stand.css`; scripts `stand-socket.js`, `stand-operator.js`, `stand-participant.js`, `stand-spectator.js` |
+| Motor conservado | `static/js/panorama-core.js`: cuaternión mundial y fundido; `static/js/viewer.js` y `templates/tours/viewer.html`: modo vinculado condicionado, conservando el visor normal |
+| Dependencias fijadas | `pyproject.toml`, `uv.lock`, `requirements.lock`; Channels/Daphne, channels-redis y cliente Redis, sin cambios de versiones de las dependencias anteriores |
+| Pruebas | `stand/tests.py`, `tests/browser/stand_server.py`, `stand.spec.mjs`, `playwright.stand.config.mjs`, nuevo script `test:stand` en `package.json` |
+| Documentación | Nueva guía `docs/STAND.md`; README, verificación e inventario actualizados |
+
+No se modifican `tours/models.py`, sus migraciones, el logo, el editor, los archivos de contenido ni las dependencias JavaScript. La migración nueva solo añade sesiones; no importa contenido. No hay cuentas nuevas en la instalación local, claves en Git, push, túneles públicos ni despliegue.

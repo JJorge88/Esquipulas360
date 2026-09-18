@@ -1,0 +1,9 @@
+{% extends 'panel/base.html' %}{% load static %}{% block page_title %}Modo stand{% endblock %}
+{% block head %}{{ block.super }}<link rel="stylesheet" href="{% static 'css/stand.css' %}">{% endblock %}
+{% block panel_content %}
+<div class="panel-heading"><div><p class="panel-kicker">UNA EXPERIENCIA PARA COMPARTIR</p><h1>Modo stand</h1><p>Un operador, un participante y una pantalla para acompañar su recorrido.</p></div></div>
+{% if error %}<p class="panel-notice error" role="alert">{{ error }}</p>{% endif %}
+{% if can_create %}<section class="panel-surface stand-create"><div><h2>Preparar una sesión</h2><p class="panel-muted">Elige un recorrido completo. El visor se vincula con un código temporal, sin cuenta administrativa.</p></div><form method="post">{% csrf_token %}<label for="stand-tour">Recorrido</label><select id="stand-tour" name="tour" required><option value="">Selecciona un recorrido</option>{% for tour in tours %}<option value="{{ tour.pk }}">{{ tour.name }} · {{ tour.get_status_display }}</option>{% endfor %}</select><button type="submit" class="panel-button primary">Crear sesión</button></form><p class="panel-help">Una sesión activa por operador. Si ya tienes una abierta, regresarás a ella. Solo se admite un visor por sesión.</p></section>{% endif %}
+<section class="panel-surface"><h2>Sesiones del stand</h2><div class="stand-session-list">{% for session in sessions %}<a href="{% url 'stand:operator' session.pk %}"><strong>{{ session.tour.name|default:'Recorrido no disponible' }}</strong><span>{{ session.get_phase_display }} · {{ session.created_at|date:'d/m H:i' }}</span><span aria-hidden="true">→</span></a>{% empty %}<p class="panel-muted">Todavía no hay sesiones. Prepara un recorrido para vincular el visor.</p>{% endfor %}</div></section>
+<p class="panel-help">La pantalla del espectador representa la escena y mirada de nuestra web; no transmite menús ni imágenes del sistema del Quest.</p>
+{% endblock %}

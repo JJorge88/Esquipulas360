@@ -1,4 +1,4 @@
-# Esquipulas 360° — fase 4
+# Esquipulas 360° — fase 5
 
 Plataforma turística y cultural para explorar Esquipulas, Guatemala. Esta entrega continúa las fases 1 (`561490c`) y 2 (`06dabfb`): conserva el diseño, el logo original, las rutas y el visor con sus controles y WebXR. Inicio, Explorar y el visor consultan ahora la base de datos. Los recorridos, escenas y puntos se administran desde Django Admin en español. La fase 3 añade un editor visual de puntos y orientación inicial por escena, con vista de prueba privada para borradores.
 
@@ -6,19 +6,25 @@ La fase 4 añade el panel visual propio en **[/panel/](http://127.0.0.1:8000/pan
 
 La demostración usa imágenes técnicas; **no representa un lugar real** y no requiere fotografías reales. No se ha hecho push ni despliegue.
 
-## Actualizar desde fase 3 (`fc2e25f`)
+## Actualizar desde fase 4 (`9408289`)
 
-No hay dependencias nuevas ni migraciones nuevas. Conserva tu base y `media/`; no hace falta regenerar ni reimportar contenido. Reinicia el servidor después de actualizar los archivos y verifica:
+La fase 5 añade **[Modo stand](http://127.0.0.1:8000/panel/stand/)**: operador, un visor vinculado por código temporal y pantalla de espectador sincronizada. Conserva contenido, usuarios y diseño. Guía de servicios, permisos, HTTPS/WSS, Quest y televisión: **[docs/STAND.md](docs/STAND.md)**.
+
+Hay una nueva migración (`stand/0001_initial`) y dependencias de sincronización: Channels, Daphne, channels-redis y Redis. Conserva `.env`, `db.sqlite3` y `media/`; no hace falta regenerar ni reimportar contenido.
 
 ```sh
-.venv/bin/python manage.py check
-.venv/bin/python manage.py makemigrations --check --dry-run
+uv sync --locked
+npm ci
 npm run build
+.venv/bin/python manage.py migrate
+.venv/bin/python manage.py check
+docker compose -f compose.stand.yml up -d
+.venv/bin/python manage.py runserver 127.0.0.1:8000 --noreload
 ```
 
-Entra a **[/panel/](http://127.0.0.1:8000/panel/)** con tu cuenta existente. Abre un recorrido para editar información, portada, escenas y publicación. Desde cada escena, **Editar puntos** reutiliza el editor visual y permite guardar su orientación inicial. **Vista previa privada** abre los datos guardados, incluso en borrador. El menú incluye Resumen, Recorridos, Categorías, Ver sitio y cierre de sesión.
+Inicia Docker Desktop antes del comando de Compose; también puedes usar Redis ya instalado mediante `STAND_REDIS_URL`. Reinicia el servidor anterior para activar ASGI/WebSockets. Vinculación del participante: **[/stand/](http://127.0.0.1:8000/stand/)**. El espectador se abre desde el operador y se mueve a la televisión como una segunda ventana. Quest requiere el origen HTTPS válido descrito en la guía; el acceso HTTP local sirve para pruebas en computadora.
 
-Consulta [docs/PANEL.md](docs/PANEL.md) para instrucciones, permisos, cargas y eliminación; [docs/EDITOR_VISUAL.md](docs/EDITOR_VISUAL.md) conserva los detalles del editor y su acceso técnico desde Admin.
+[docs/PANEL.md](docs/PANEL.md) mantiene las instrucciones del panel y [docs/EDITOR_VISUAL.md](docs/EDITOR_VISUAL.md) las del editor. No se añaden usuarios ni contraseñas predeterminados.
 
 ## Actualizar una instalación de fase 1
 
@@ -43,7 +49,7 @@ Puedes repetir `import_phase1`: identifica cada recorrido por su clave de origen
 
 ## Instalación nueva
 
-Requisitos: Python 3.12–3.14 (probado con 3.13), Node.js 20 o posterior y npm. `uv` es opcional.
+Requisitos: Python 3.12–3.14 (probado con 3.13), Node.js 20 o posterior y npm. `uv` es opcional. El modo stand requiere también Redis, disponible mediante Docker Desktop y `compose.stand.yml`; consulta [la guía del stand](docs/STAND.md) para iniciarlo.
 
 ```sh
 uv sync --locked
@@ -96,6 +102,8 @@ La guía [docs/CONTENIDO.md](docs/CONTENIDO.md) detalla publicación, formatos, 
 | `/recorridos/demostracion/` | Visor de las dos escenas técnicas importadas |
 | `/recorridos/<slug>/` | Visor solo si el recorrido es demostración o disponible y está completo |
 | `/panel/` | Panel visual privado: resumen, recorridos, escenas y categorías |
+| `/panel/stand/` | Operador: preparar, vincular y dirigir su sesión |
+| `/stand/` | Vincular el visor sin cuenta administrativa |
 | `/panel/ingresar/` | Acceso con la cuenta existente de Django |
 | `/admin/` | Administración técnica: usuarios, grupos y permisos; conserva todos los modelos |
 
@@ -115,7 +123,7 @@ SQLite se mantiene para desarrollo. Respalda juntos `db.sqlite3` y `media/`. No 
 
 ## Pruebas
 
-Con las panorámicas generadas y el contenido importado:
+Con las panorámicas generadas, recursos compilados y Redis local en ejecución (`docker compose -f compose.stand.yml up -d`):
 
 ```sh
 .venv/bin/python manage.py check
@@ -125,9 +133,10 @@ npm run build
 npm run test:e2e
 npm run test:editor
 npm run test:panel
+npm run test:stand
 ```
 
-Las pruebas de Django usan una base aislada y archivos temporales. Las suites de navegador también usan bases, usuarios y archivos desechables: panel en el puerto 8014, editor en 8013 y sitio público en 8015. Requieren Google Chrome, las panorámicas técnicas generadas y los recursos compilados; importan su propio catálogo sin modificar los datos de tu instalación. El panel prueba el inicio de sesión con una contraseña aleatoria solo para esa ejecución; no guarda credenciales en Git.
+Las pruebas de Django usan una base aislada y archivos temporales. Las suites de navegador también usan bases, usuarios y archivos desechables: panel en el puerto 8014, editor en 8013, sitio público en 8015 y stand en 8016. La suite de stand usa Redis con un prefijo temporal que limpia al terminar. Requieren Google Chrome, las panorámicas técnicas generadas y los recursos compilados; importan su propio catálogo sin modificar los datos de tu instalación. El panel prueba el inicio de sesión con una contraseña aleatoria solo para esa ejecución; no guarda credenciales en Git.
 
 Las pruebas usan renderizado gráfico por software. Guardan capturas en `artifacts/` y reportes separados en `artifacts/panel-report`, `artifacts/editor-report` y `playwright-report`. Detalles, resultados y pendientes en [docs/VERIFICACION.md](docs/VERIFICACION.md).
 
@@ -139,10 +148,10 @@ Quest necesita un origen **HTTPS válido y confiable para el visor**. `http://19
 
 Si usas un proxy local, el servidor puede escuchar con `.venv/bin/python manage.py runserver 0.0.0.0:8000`. Configura el host real en `DJANGO_ALLOWED_HOSTS` y el origen HTTPS en `DJANGO_CSRF_TRUSTED_ORIGINS`. `DJANGO_TRUST_PROXY=true` solo es apropiado si el proxy elimina encabezados `X-Forwarded-Proto` suministrados por clientes y establece el suyo. El servidor Django es para desarrollo.
 
-La experiencia usa `immersive-vr` y espacio de referencia `local`, cámara estacionaria, puntos fijos y mandos con rayos. Conserva botones 3D de escenas, inicio, catálogo, salida y reintento. En VR, la cabeza controla la inclinación y la orientación inicial horizontal gira el conjunto de cámara y mandos. No hay desplazamiento continuo ni escala física 1:1.
+La experiencia usa `immersive-vr` y espacio de referencia `local`, cámara estacionaria, puntos fijos y mandos con rayos. Conserva botones 3D de escenas, inicio, catálogo, salida y reintento. En el visor normal, la cabeza controla la inclinación y la orientación inicial horizontal gira el conjunto de cámara y mandos. En modo stand los cambios conservan la mirada, sin aplicar un giro automático del rig. No hay desplazamiento continuo ni escala física 1:1.
 
 ## Dependencias y alcance
 
 Django 5.2.17, A-Frame 1.8.0, Tailwind 4.3.3, Pillow 12.3.0; Playfair Display y Plus Jakarta Sans 5.3.0. Las dependencias están fijadas en `uv.lock`, `requirements.lock`, `package-lock.json` y `content/vendor.json`.
 
-Entrega limitada a fase 4: panel visual propio con el editor existente y Django Admin conservado para tareas técnicas. No se añade audio, video, monetización, analítica, modo guiado, funcionamiento sin internet ni despliegue. No hay migraciones ni actualizaciones de dependencias para esta fase.
+Entrega limitada a fase 5: modo stand con un participante y espectador, sobre las funciones existentes. Se añaden Channels 4.3.2, Daphne 4.2.3, channels-redis 4.3.0, redis-py 6.4.0 y Redis 7.4 como servicio local. No se añade audio, video, monetización, grabación de miradas, analítica histórica, varios visores por sesión, modo guiado, funcionamiento sin internet ni despliegue. La prueba física de orientación inmersiva en Quest 2 sigue pendiente.

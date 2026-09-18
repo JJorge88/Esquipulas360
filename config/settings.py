@@ -15,7 +15,7 @@ if not SECRET_KEY or SECRET_KEY == "replace-with-a-random-local-secret":
     raise ImproperlyConfigured("Configura DJANGO_SECRET_KEY en .env (consulta README.md).")
 ALLOWED_HOSTS = [s.strip() for s in os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,[::1]").split(",") if s.strip()]
 CSRF_TRUSTED_ORIGINS = [s.strip() for s in os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if s.strip()]
-INSTALLED_APPS = ["django.contrib.admin", "django.contrib.auth", "django.contrib.contenttypes", "django.contrib.sessions", "django.contrib.messages", "django.contrib.staticfiles", "tours.apps.ToursConfig"]
+INSTALLED_APPS = ["daphne", "stand.apps.StandConfig", "django.contrib.admin", "django.contrib.auth", "django.contrib.contenttypes", "django.contrib.sessions", "django.contrib.messages", "django.contrib.staticfiles", "tours.apps.ToursConfig"]
 MIDDLEWARE = ["django.middleware.security.SecurityMiddleware", "django.contrib.sessions.middleware.SessionMiddleware", "django.middleware.common.CommonMiddleware", "django.middleware.csrf.CsrfViewMiddleware", "django.contrib.auth.middleware.AuthenticationMiddleware", "django.contrib.messages.middleware.MessageMiddleware", "django.middleware.clickjacking.XFrameOptionsMiddleware"]
 ROOT_URLCONF = "config.urls"
 TEMPLATES = [{"BACKEND": "django.template.backends.django.DjangoTemplates", "DIRS": [BASE_DIR / "templates"], "APP_DIRS": True, "OPTIONS": {"context_processors": ["django.template.context_processors.request", "django.contrib.auth.context_processors.auth", "django.contrib.messages.context_processors.messages", "tours.context.site_settings"]}}]
@@ -56,3 +56,16 @@ IMAGE_MAX_DIMENSION = int(os.getenv("IMAGE_MAX_DIMENSION", 8192))
 IMAGE_MAX_PIXELS = int(os.getenv("IMAGE_MAX_PIXELS", 33554432))
 PANORAMA_RATIO_TOLERANCE = float(os.getenv("PANORAMA_RATIO_TOLERANCE", "0.01"))
 FILE_UPLOAD_MAX_MEMORY_SIZE = 2 * 1024 * 1024
+
+# Live stand: Redis holds only expiring connection/pose data; SQLite holds current commands.
+ASGI_APPLICATION = "config.asgi.application"
+STAND_REDIS_URL = os.getenv("STAND_REDIS_URL", "redis://127.0.0.1:6379/0")
+STAND_REDIS_PREFIX = os.getenv("STAND_REDIS_PREFIX", "esquipulas-stand")
+STAND_ALLOWED_ORIGINS = [s.strip() for s in os.getenv("STAND_ALLOWED_ORIGINS", "http://127.0.0.1:8000,http://localhost:8000").split(",") if s.strip()]
+STAND_CODE_SECONDS = int(os.getenv("STAND_CODE_SECONDS", "300"))
+STAND_SESSION_SECONDS = int(os.getenv("STAND_SESSION_SECONDS", "14400"))
+STAND_PAIR_ATTEMPTS = int(os.getenv("STAND_PAIR_ATTEMPTS", "8"))
+STAND_HEARTBEAT_TIMEOUT = 8
+CHANNEL_LAYERS = {"default": {"BACKEND": "channels_redis.core.RedisChannelLayer", "CONFIG": {
+    "hosts": [STAND_REDIS_URL], "prefix": STAND_REDIS_PREFIX + "-channels", "expiry": 3, "capacity": 40,
+}}}

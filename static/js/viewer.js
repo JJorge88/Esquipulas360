@@ -2,6 +2,10 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const root = $('main');
+  const inStand = Boolean($('stand-config'));
+  let standReady;
+  const readyForStand = new Promise(resolve => { standReady = resolve; });
+  let standConnected = false, standRunning = false, standFinished = false;
   const scene = $('panorama-scene');
   const status = $('viewer-status');
   const retry = $('retry');
@@ -60,7 +64,7 @@
   // Reapply these settings before the scene initializes its UI and sensors.
   scene.setAttribute('xr-mode-ui', 'enabled', false);
   scene.setAttribute('device-orientation-permission-ui', 'enabled', false);
-  const tour = JSON.parse($('tour-data').textContent);
+  let tour = JSON.parse($('tour-data').textContent);
   const scenes = new Map(tour.scenes.map(item => [item.id, item]));
   const sky = $('panorama-sky');
   const rig = $('camera-rig');
@@ -89,7 +93,7 @@
   const vrTitle = label('Cargando escena…', '0 0.48 0', 2.7);
   const vrStatus = label(tour.status === 'demo' ? 'Demo técnica · No es un lugar real' : tour.name, '0 0.15 0', 2.7);
   vrNav.append(vrTitle, vrStatus);
-  const vrSceneButtons = tour.scenes.map((item, index) => label(item.name, `${(index - (tour.scenes.length - 1) / 2) * 1.38} -0.18 0`, 1.3, `scene:${item.id}`, true));
+  let vrSceneButtons = tour.scenes.map((item, index) => label(item.name, `${(index - (tour.scenes.length - 1) / 2) * 1.38} -0.18 0`, 1.3, `scene:${item.id}`, true));
   vrNav.append(...vrSceneButtons);
   vrNav.append(label('Inicio', '-1.02 -0.52 0', .94, 'start'), label(root.dataset.backUrl ? 'Editor' : 'Explorar', '0 -0.52 0', .94, 'explore'), label('Salir de VR', '1.02 -0.52 0', .94, 'exit'));
   const vrRetry = label('Reintentar carga', '0 0.8 0', 1.8, 'retry', true);
@@ -99,7 +103,10 @@
   async function navigateVR(action) {
     if (action.startsWith('scene:')) return loadScene(action.slice(6));
     if (action === 'start') return loadScene(tour.initial_scene);
-    if (action === 'retry') return loadScene(pendingId);
+    if (action === 'retry') {
+      if (inStand) return window.dispatchEvent(new Event('stand:retry'));
+      return loadScene(pendingId);
+    }
     try {
       await scene.exitVR();
       if (action === 'explore') location.assign(root.dataset.backUrl || '/explorar/');
@@ -169,7 +176,12 @@
     }
   }
 
-  async function loadScene(id) {
+  async function loadScene(id, authoritative = false) {
+    if (inStand && !authoritative) {
+      if (standConnected && standRunning) window.dispatchEvent(new CustomEvent('stand:navigate', { detail: { scene: id } }));
+      else toast('Espera a que el operador inicie el recorrido y haya conexión.');
+      return false;
+    }
     const item = scenes.get(id);
     if (!item) return;
     pendingId = id;
@@ -198,6 +210,11 @@
       texture = new THREE.Texture(image);
       texture.colorSpace = THREE.SRGBColorSpace;
       texture.needsUpdate = true;
+      if (inStand) {
+        scene.setAttribute('stand-transition', 'active', true);
+        await new Promise(resolve => setTimeout(resolve, 160));
+        if (ticket !== generation) return false;
+      }
       const material = sky.getObject3D('mesh').material;
       material.map = texture; material.color.set('#ffffff'); material.needsUpdate = true;
       releasePanorama();
@@ -209,7 +226,7 @@
       $('scene-description').textContent = item.text || tour.description;
       vrTitle.setAttribute('tour-label', 'text', item.name);
       setVRStatus(tour.status === 'demo' ? 'Demo técnica · No es un lugar real' : tour.name);
-      setOrientation(item);
+      if (!inStand) setOrientation(item); // Stand commands never rotate the participant's head/rig.
       renderHotspots(item);
       setAudio(item);
       hotspots.setAttribute('visible', true);
@@ -220,13 +237,16 @@
       status.hidden = true;
       status.setAttribute('aria-busy', 'false');
       root.dataset.loading = 'false';
+      return true;
     } catch (error) {
       if (ticket !== generation) return;
       const reason = error.message.includes('2:1') || error.message.includes('resolución') ? error.message : 'El archivo no está disponible, la conexión falló o la carga tardó demasiado.';
       showStatus('No pudimos abrir esta escena', `${reason} Puedes volver a intentarlo.`, true);
       setVRStatus('Error de carga. Selecciona Reintentar u otra escena.', true);
       root.dataset.loading = 'error';
+      return false;
     } finally {
+      if (inStand && ticket === generation) scene.setAttribute('stand-transition', 'active', false);
       clearTimeout(timeout);
       texture?.dispose();
       if (image) image.src = '';
@@ -248,11 +268,11 @@
         vrMessage.textContent = 'No se pudo comprobar VR. Revisa los permisos del navegador; puedes continuar en pantalla normal.';
       }
     }
-    vrButton.disabled = !xrSupported || !initialized || xrPending;
+    vrButton.disabled = !xrSupported || !initialized || xrPending || standFinished;
     vrButton.textContent = xrSupported ? 'Entrar en VR' : 'VR no disponible';
   }
   vrButton.addEventListener('click', async () => {
-    if (!xrSupported || xrPending) return;
+    if (!xrSupported || xrPending || standFinished) return;
     xrPending = true; vrButton.disabled = true; vrButton.textContent = 'Abriendo VR…';
     try {
       vrGesture = true;
@@ -269,7 +289,7 @@
         : 'La sesión VR se canceló o no pudo iniciarse. Puedes reintentarlo o seguir aquí.';
     } finally {
       vrGesture = false;
-      xrPending = false; vrButton.disabled = !xrSupported; vrButton.textContent = 'Entrar en VR';
+      xrPending = false; vrButton.disabled = !xrSupported || standFinished; vrButton.textContent = 'Entrar en VR';
     }
   });
   scene.addEventListener('enter-vr', () => {
@@ -288,8 +308,46 @@
   navigator.xr?.addEventListener('devicechange', detectVR);
   select.addEventListener('change', () => loadScene(select.value));
   retry.addEventListener('click', () => {
-    if (!initialized) location.reload(); else loadScene(pendingId);
+    if (inStand && initialized) window.dispatchEvent(new Event('stand:retry'));
+    else if (!initialized) location.reload(); else loadScene(pendingId);
   });
+
+  if (inStand) window.ES360Viewer = {
+    ready: readyForStand,
+    async apply(nextTour, id, reset = false) {
+      await readyForStand;
+      if (standFinished || !initialized || scene.renderer.getContext().isContextLost()) return false;
+      const rebuildControls = tour.id !== nextTour.id || JSON.stringify(tour.scenes.map(item => [item.id, item.name])) !== JSON.stringify(nextTour.scenes.map(item => [item.id, item.name]));
+      tour = nextTour;
+      scenes.clear(); tour.scenes.forEach(item => scenes.set(item.id, item));
+      document.querySelector('.viewer-top-title h1').textContent = tour.name;
+      if (rebuildControls) {
+        select.replaceChildren(...tour.scenes.map(item => new Option(item.name, item.id)));
+        vrSceneButtons.forEach(button => button.remove());
+        vrSceneButtons = tour.scenes.map((item, index) => label(item.name, `${(index - (tour.scenes.length - 1) / 2) * 1.38} -0.18 0`, 1.3, `scene:${item.id}`, true));
+        vrNav.append(...vrSceneButtons);
+      }
+      if (reset) { info.hidden = true; infoButton.setAttribute('aria-expanded', 'false'); $('viewer-toast').hidden = true; }
+      return loadScene(id, true);
+    },
+    connection(connected, running, message) {
+      standConnected = connected; standRunning = running;
+      if (message) setVRStatus(message);
+    },
+    finish(message) {
+      standFinished = true;
+      standConnected = standRunning = false;
+      ++generation; controller?.abort();
+      scene.setAttribute('stand-transition', 'active', false);
+      hotspots.setAttribute('visible', false);
+      vrSceneButtons.forEach(button => button.setAttribute('visible', false));
+      vrButton.disabled = true;
+      showStatus('Sesión finalizada', message, false); $('loading-ring').hidden = true;
+      setVRStatus('Sesión finalizada · Puedes salir de VR');
+    },
+    get currentScene() { return currentId; },
+    get loading() { return root.dataset.loading !== 'false'; },
+  };
 
   let startupTimeout = setTimeout(() => {
     if (!initialized) showStatus('El visor no pudo iniciarse', 'Comprueba que WebGL esté disponible en tu navegador y vuelve a intentarlo.', true);
@@ -309,19 +367,26 @@
       event.preventDefault();
       initialized = false;
       controller?.abort();
+      if (inStand) window.dispatchEvent(new Event('stand:graphics-error'));
       showStatus('La vista 360° se interrumpió', 'Se perdió la conexión con los gráficos del dispositivo. Reintenta para recargar el visor.', true);
     });
-    loadScene(tour.initial_scene);
+    if (inStand) {
+      if (!standFinished) showStatus('Listo para el stand', 'Espera a que el operador inicie el recorrido.');
+      $('loading-ring').hidden = true;
+      if (!standFinished) setVRStatus('Stand · Esperando al operador');
+      standReady();
+    } else loadScene(tour.initial_scene);
     detectVR();
   }
   scene.addEventListener('loaded', start, { once: true });
   scene.addEventListener('renderstart', start, { once: true });
   if (scene.hasLoaded) start();
   detectVR();
-  window.addEventListener('pagehide', () => {
+  window.addEventListener('pagehide', event => {
+    if (inStand && event.persisted) return;
     ++generation; controller?.abort(); releasePanorama();
     const audio = $('audio-container').querySelector('audio'); audio?.pause();
     clearTimeout(startupTimeout); clearTimeout(toast.timeout);
   });
-  window.addEventListener('pageshow', event => { if (event.persisted && initialized) loadScene(currentId || tour.initial_scene); });
+  window.addEventListener('pageshow', event => { if (!inStand && event.persisted && initialized) loadScene(currentId || tour.initial_scene); });
 })();

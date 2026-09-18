@@ -10,7 +10,8 @@
     "dev:css": "tailwindcss -i assets/css/input.css -o static/css/app.css --watch",
     "test:e2e": "playwright test",
     "test:editor": "playwright test --config playwright.editor.config.mjs",
-    "test:panel": "playwright test --config playwright.panel.config.mjs"
+    "test:panel": "playwright test --config playwright.panel.config.mjs",
+    "test:stand": "playwright test --config playwright.stand.config.mjs"
   },
   "dependencies": {
     "@fontsource-variable/playfair-display": "5.3.0",
