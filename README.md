@@ -1,8 +1,22 @@
-# Esquipulas 360° — fase 2
+# Esquipulas 360° — fase 3
 
-Plataforma turística y cultural para explorar Esquipulas, Guatemala. Esta fase continúa la fase 1 (`561490c`): conserva el diseño, el logo original, las rutas y el visor con sus controles y WebXR. Inicio, Explorar y el visor consultan ahora la base de datos. Los recorridos, escenas y puntos se administran desde Django Admin en español.
+Plataforma turística y cultural para explorar Esquipulas, Guatemala. Esta entrega continúa las fases 1 (`561490c`) y 2 (`06dabfb`): conserva el diseño, el logo original, las rutas y el visor con sus controles y WebXR. Inicio, Explorar y el visor consultan ahora la base de datos. Los recorridos, escenas y puntos se administran desde Django Admin en español. La fase 3 añade un editor visual de puntos y orientación inicial por escena, con vista de prueba privada para borradores.
 
 La demostración usa imágenes técnicas; **no representa un lugar real** y no requiere fotografías reales. No se ha hecho push ni despliegue.
+
+## Actualizar desde fase 2
+
+No hay dependencias nuevas ni migraciones nuevas. Conserva tu base y `media/`; no hace falta regenerar ni reimportar contenido. Reinicia el servidor después de actualizar los archivos y verifica:
+
+```sh
+.venv/bin/python manage.py check
+.venv/bin/python manage.py makemigrations --check --dry-run
+npm run build
+```
+
+En Admin, abre una escena guardada y pulsa **Editar puntos visualmente**. Activa **Añadir punto**, haz clic sobre la panorámica, completa etiqueta/destino y guarda. Selecciona los marcadores para editar, reubicar o eliminar con confirmación. Para orientar la escena, mira en la dirección deseada, pulsa **Usar esta vista al iniciar** y **Guardar orientación**.
+
+**Probar datos guardados** abre una pestaña privada con el visor y permite recorrer escenas sin publicar borradores. Consulta [docs/EDITOR_VISUAL.md](docs/EDITOR_VISUAL.md) para permisos, cambios pendientes, errores y uso en móvil.
 
 ## Actualizar una instalación de fase 1
 
@@ -105,11 +119,12 @@ Con las panorámicas generadas y el contenido importado:
 .venv/bin/python manage.py test
 npm run build
 npm run test:e2e
+npm run test:editor
 ```
 
-Las pruebas de Django usan una base aislada y archivos temporales. Las de navegador requieren Google Chrome instalado y el catálogo de demostración local; pueden iniciar el servidor si no está activo. Usan renderizado gráfico por software, guardan capturas en `artifacts/` y trazas de fallos en `test-results/`. Reporte: `npx playwright show-report`.
+Las pruebas de Django usan una base aislada y archivos temporales. `npm run test:editor` también usa una base y archivos desechables, un usuario sin contraseña utilizable y un servidor separado en el puerto 8013; no modifica la instalación local. Su reporte está en `artifacts/editor-report`. Las de navegador requieren Google Chrome instalado y el catálogo de demostración local; pueden iniciar el servidor si no está activo. Usan renderizado gráfico por software, guardan capturas en `artifacts/` y trazas de fallos en `test-results/`. Reporte: `npx playwright show-report`.
 
-Resultado de esta fase: **48 pruebas de Django y 13 de navegador aprobadas**. Detalle y pendientes en [docs/VERIFICACION.md](docs/VERIFICACION.md).
+Resultado de esta fase: **70 pruebas de Django, 13 del navegador público y 7 del editor aprobadas**. Detalle y pendientes en [docs/VERIFICACION.md](docs/VERIFICACION.md).
 
 ## Meta Quest 2
 
@@ -125,4 +140,4 @@ La experiencia usa `immersive-vr` y espacio de referencia `local`, cámara estac
 
 Django 5.2.17, A-Frame 1.8.0, Tailwind 4.3.3, Pillow 12.3.0; Playfair Display y Plus Jakarta Sans 5.3.0. Las dependencias están fijadas en `uv.lock`, `requirements.lock`, `package-lock.json` y `content/vendor.json`.
 
-Entrega limitada a fase 2. No se añade editor visual de puntos, audio, video, monetización, modo guiado, funcionamiento sin internet, panel personalizado ni despliegue.
+Entrega limitada a fase 3: editor visual por escena integrado con Admin. No se añade audio, video, monetización, modo guiado, funcionamiento sin internet, un reemplazo de Django Admin ni despliegue.

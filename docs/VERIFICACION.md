@@ -1,8 +1,21 @@
-# Verificación de fase 2
+# Verificación de fase 3
 
 Entorno: macOS, Python 3.13, Django 5.2.17, Node.js 26 y Google Chrome controlado con Playwright. Las pruebas gráficas usan renderizado por software. Fecha local: 17 de septiembre de 2026.
 
-## Ejecutado
+## Resultado de fase 3
+
+- **70 pruebas Django aprobadas:** las 48 de fase 2 y 22 nuevas del editor. Se comprueban autorización por operación, acceso anónimo/no personal, solo lectura, CSRF en POST/PATCH/DELETE, ausencia de escrituras por GET, destinos ajenos/al origen/inexistentes, valores no finitos o fuera de rango, JSON inválido, creación idempotente, edición, eliminación, revisiones y persistencia de orientación.
+- **13 pruebas del visor público aprobadas:** conservación de rutas, búsqueda, móvil, puntos, giro, pantalla completa, carga/reintento y comportamiento WebXR simulado.
+- **7 pruebas del editor en Chrome aprobadas:** creación visual, selección desde marcador/lista, reubicación y eliminación confirmada; persistencia tras recargar; arrastres sin colocaciones accidentales; errores de guardado y respuesta perdida sin duplicados; orientación y restauración coherentes con la prueba privada; advertencia al salir/recargar; previsualización de datos guardados mientras hay edición pendiente; correspondencia espacial con el visor público; gestos y guardado en móvil emulado.
+- `manage.py check` sin incidencias; `makemigrations --check --dry-run` sin cambios: fase 3 no necesita migraciones.
+- Compilación de recursos y sintaxis de los archivos JavaScript verificadas. No se cambian versiones de dependencias.
+- Revisión visual de capturas del editor en escritorio y móvil. El logo y los datos locales de la demostración se conservan.
+
+Las pruebas del editor en navegador utilizan una base temporal separada, archivos temporales y una sesión de prueba con contraseña inutilizable. El servidor de pruebas se cierra y borra estos datos al terminar. Se añadieron carpetas separadas para los diagnósticos de ambas suites, evitando interferencias entre sus reportes.
+
+Los permisos se comprobaron por HTTP con Django, incluyendo clientes con comprobación CSRF real. Los cambios visuales y las interacciones se comprobaron mediante Chrome. Los errores de red y pérdida de respuesta de guardado se inducen intencionalmente en las pruebas.
+
+## Verificación conservada de fase 2
 
 - `manage.py check`: sin incidencias.
 - `makemigrations --check --dry-run`: sin cambios pendientes; migración inicial aplicada en la instalación local y en las bases vacías de pruebas.

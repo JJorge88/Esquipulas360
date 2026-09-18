@@ -75,38 +75,6 @@
   let vrGesture = false;
   scene.enterVR = (...args) => vrGesture ? enterVR(...args) : Promise.resolve();
 
-  // Canvas labels avoid remote font requests; every label is a real WebGL object in VR.
-  AFRAME.registerComponent('tour-label', {
-    schema: { text: { default: '' }, width: { default: 1 }, height: { default: 0.26 }, accent: { default: false } },
-    init() {
-      this.canvas = document.createElement('canvas');
-      this.canvas.width = 1024; this.canvas.height = 256;
-      this.texture = new THREE.CanvasTexture(this.canvas);
-      this.texture.colorSpace = THREE.SRGBColorSpace;
-      this.material = new THREE.MeshBasicMaterial({ map: this.texture, transparent: true, side: THREE.DoubleSide });
-      this.geometry = new THREE.PlaneGeometry(this.data.width, this.data.height);
-      this.el.setObject3D('mesh', new THREE.Mesh(this.geometry, this.material));
-    },
-    update() {
-      const ctx = this.canvas.getContext('2d');
-      ctx.clearRect(0, 0, 1024, 256);
-      ctx.fillStyle = this.data.accent ? '#fece57' : '#132238';
-      ctx.beginPath(); ctx.roundRect(0, 0, 1024, 256, 30); ctx.fill();
-      ctx.strokeStyle = '#8796a5'; ctx.lineWidth = 4; ctx.stroke();
-      ctx.fillStyle = this.data.accent ? '#132238' : '#fbf9f6';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      let size = 70;
-      do { ctx.font = `600 ${size}px sans-serif`; size -= 2; } while (ctx.measureText(this.data.text).width > 940 && size > 16);
-      ctx.fillText(this.data.text, 512, 128);
-      this.texture.needsUpdate = true;
-    },
-    remove() { this.texture.dispose(); this.material.dispose(); this.geometry.dispose(); this.el.removeObject3D('mesh'); }
-  });
-  AFRAME.registerComponent('tour-face-camera', {
-    init() { this.target = new THREE.Vector3(); },
-    tick() { if (scene.camera) { scene.camera.getWorldPosition(this.target); this.el.object3D.lookAt(this.target); } }
-  });
-
   function label(text, position, width = 1, action = null, accent = false) {
     const el = document.createElement('a-entity');
     el.setAttribute('position', position);
@@ -123,7 +91,7 @@
   vrNav.append(vrTitle, vrStatus);
   const vrSceneButtons = tour.scenes.map((item, index) => label(item.name, `${(index - (tour.scenes.length - 1) / 2) * 1.38} -0.18 0`, 1.3, `scene:${item.id}`, true));
   vrNav.append(...vrSceneButtons);
-  vrNav.append(label('Inicio', '-1.02 -0.52 0', .94, 'start'), label('Explorar', '0 -0.52 0', .94, 'explore'), label('Salir de VR', '1.02 -0.52 0', .94, 'exit'));
+  vrNav.append(label('Inicio', '-1.02 -0.52 0', .94, 'start'), label(root.dataset.backUrl ? 'Editor' : 'Explorar', '0 -0.52 0', .94, 'explore'), label('Salir de VR', '1.02 -0.52 0', .94, 'exit'));
   const vrRetry = label('Reintentar carga', '0 0.8 0', 1.8, 'retry', true);
   vrRetry.setAttribute('visible', false);
   vrNav.append(vrRetry);
@@ -134,7 +102,7 @@
     if (action === 'retry') return loadScene(pendingId);
     try {
       await scene.exitVR();
-      if (action === 'explore') location.assign('/explorar/');
+      if (action === 'explore') location.assign(root.dataset.backUrl || '/explorar/');
     } catch { toast('No se pudo cerrar VR. Usa el botón del sistema del visor.'); }
   }
 
@@ -184,15 +152,7 @@
   }
 
   function setOrientation(item) {
-    rig.object3D.rotation.set(0, THREE.MathUtils.degToRad(item.orientation.yaw), 0);
-    const look = camera.components['look-controls'];
-    if (look) {
-      look.yawObject.rotation.y = 0;
-      look.pitchObject.rotation.x = THREE.MathUtils.degToRad(item.orientation.pitch);
-    }
-    if (!scene.renderer.xr.isPresenting) camera.object3D.rotation.set(THREE.MathUtils.degToRad(item.orientation.pitch), 0, 0);
-    scene.object3D.updateMatrixWorld(true);
-    scene.camera.updateMatrixWorld(true);
+    PanoramaTools.setOrientation(scene, rig, camera, item.orientation);
   }
 
   function setAudio(item) {
@@ -343,22 +303,7 @@
     // Initialize after the scene's permission component exists (A-Frame 1.8 mobile lifecycle).
     // Touch and mouse need no motion-sensor permission; WebXR provides the headset pose.
     camera.setAttribute('look-controls', { pointerLockEnabled: false, magicWindowTrackingEnabled: false });
-    // Native A-Frame touch dragging only changes yaw. Add pitch without motion sensors.
-    let touchY = null;
-    scene.canvas.addEventListener('touchstart', event => {
-      touchY = event.touches.length === 1 && !scene.is('vr-mode') ? event.touches[0].clientY : null;
-    }, { passive: true });
-    scene.canvas.addEventListener('touchmove', event => {
-      if (touchY === null || event.touches.length !== 1 || scene.is('vr-mode')) return;
-      const y = event.touches[0].clientY;
-      const pitch = camera.components['look-controls'].pitchObject.rotation;
-      pitch.x = THREE.MathUtils.clamp(pitch.x - (y - touchY) * Math.PI / scene.canvas.clientHeight, -Math.PI / 2, Math.PI / 2);
-      touchY = y;
-      event.preventDefault();
-    }, { passive: false });
-    const endTouch = () => { touchY = null; };
-    scene.canvas.addEventListener('touchend', endTouch);
-    scene.canvas.addEventListener('touchcancel', endTouch);
+    PanoramaTools.touchPitch(scene, camera);
     scene.canvas.setAttribute('aria-label', 'Panorama 360 grados. Arrastra para mirar o usa el selector de escenas.');
     scene.canvas.addEventListener('webglcontextlost', event => {
       event.preventDefault();

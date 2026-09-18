@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from django.urls import path
+from . import editor
 from .forms import TourForm, NavigationPointForm
 from .images import file_exists
 from .models import Category, Tour, Scene, NavigationPoint
@@ -69,6 +71,7 @@ class NavigationInline(admin.TabularInline):
 
 @admin.register(Scene)
 class SceneAdmin(admin.ModelAdmin):
+    change_form_template = "admin/tours/scene/change_form.html"
     list_display = ["name", "tour", "order", preview]
     list_filter = ["tour", "tour__status"]
     search_fields = ["name", "tour__name", "text"]
@@ -81,6 +84,21 @@ class SceneAdmin(admin.ModelAdmin):
         ("Orientación inicial", {"fields": ["yaw", "pitch"], "description": "Grados de escena: 0 al frente, +90 a la izquierda, −90 a la derecha. Vertical positivo hacia arriba. No es una brújula geográfica."}),
         ("Información", {"fields": ["text"]}),
     ]
+
+    def get_urls(self):
+        routes = [
+            ("editor/", editor.page, "editor"),
+            ("editor/data/", editor.data, "editor_data"),
+            ("editor/points/", editor.create_point, "points"),
+            ("editor/points/<int:point_id>/", editor.point_detail, "point_detail"),
+            ("editor/orientation/", editor.orientation, "orientation"),
+            ("preview/", editor.preview, "preview"),
+            ("panorama/", editor.panorama, "panorama"),
+        ]
+        return [path(f"<int:scene_id>/{route}", self.admin_site.admin_view(view), name=f"tours_scene_{name}") for route, view, name in routes] + super().get_urls()
+
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        return super().change_view(request, object_id, form_url, {**(extra_context or {}), "can_edit_visually": editor.can_edit(request.user)})
 
     def get_readonly_fields(self, request, obj=None):
         return [preview, "tour"] if obj else [preview]

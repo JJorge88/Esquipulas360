@@ -3,6 +3,7 @@ import unicodedata
 from django.conf import settings
 from django.db.models import Prefetch
 from django.templatetags.static import static
+from django.urls import reverse
 from .images import file_exists
 from .models import Tour, Scene, NavigationPoint
 
@@ -34,13 +35,13 @@ def filter_tours(tours, query="", category=""):
     words = normalized(query).split()
     return [tour for tour in tours if (not category or tour.category.slug == category) and all(word in normalized(f"{tour.name} {tour.description} {tour.category.name}") for word in words)]
 
-def viewer_data(tour):
+def viewer_data(tour, *, private=False):
     return {
         "name": tour.name, "description": tour.description, "status": tour.status,
         "initial_scene": tour.initial_scene.key,
         "panorama_ratio_tolerance": settings.PANORAMA_RATIO_TOLERANCE,
         "scenes": [
-            {"id": scene.key, "name": scene.name, "panorama": scene.panorama.url,
+            {"id": scene.key, "name": scene.name, "panorama": reverse("admin:tours_scene_panorama", args=[scene.pk]) if private else scene.panorama.url,
              "orientation": {"yaw": scene.yaw, "pitch": scene.pitch}, "text": scene.text,
              "hotspots": [{"id": point.key, "label": point.label, "destination": point.destination.key, "position": point.position()} for point in scene.hotspots.all()]}
             for scene in tour.scenes.all()

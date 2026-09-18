@@ -1,4 +1,6 @@
-# Administrar lugares, escenas y puntos — fase 2
+# Administrar lugares, escenas y puntos
+
+Desde fase 3, cada escena guardada ofrece **Editar puntos visualmente** en Admin: coloca o mueve marcadores con un clic, elige etiqueta/destino y guarda; la vista inicial también se elige mirando la panorámica. La guía [EDITOR_VISUAL.md](EDITOR_VISUAL.md) explica su uso y la prueba privada de borradores. Los campos angulares de Admin continúan disponibles.
 
 El contenido de los recorridos se guarda en la base de datos y se edita desde `/admin/`. No es necesario cambiar plantillas ni JSON. La instalación y la creación del superusuario se describen en [README.md](../README.md).
 

@@ -1,0 +1,63 @@
+{% extends 'base.html' %}{% load static %}
+{% block title %}Editar puntos · {{ scene.name }} · Esquipulas 360°{% endblock %}
+{% block body_class %}editor-page{% endblock %}
+{% block header %}{% endblock %}{% block footer %}{% endblock %}
+{% block head %}
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="{% static 'css/editor.css' %}">
+<script src="{% static 'vendor/aframe/aframe.min.js' %}" defer></script>
+<script src="{% static 'js/panorama-core.js' %}" defer></script>
+<script src="{% static 'js/editor.js' %}" defer></script>
+{% endblock %}
+{% block content %}
+<main id="main" class="editor-shell" data-dirty="false">
+  <header class="editor-header">
+    <a class="editor-brand" href="{% url 'admin:tours_scene_change' scene.pk %}"><img src="{% static 'images/logo.png' %}" alt="Esquipulas 360°"><span>← Volver al admin</span></a>
+    <div class="editor-heading"><p>{{ scene.tour.name }} · {{ scene.tour.get_status_display }}</p><h1>{{ scene.name }}</h1></div>
+    <a id="preview-link" class="editor-button secondary" href="{% url 'admin:tours_scene_preview' scene.pk %}" target="_blank" rel="noopener">Probar datos guardados ↗</a>
+  </header>
+  <div class="editor-toolbar"><strong>EDITOR DE PUNTOS</strong><span id="mode-hint">Arrastra para mirar. Selecciona un punto para editarlo.</span><span id="pending-state" role="status">Sin cambios pendientes</span></div>
+  <div class="editor-workspace">
+    <section class="editor-panorama" aria-label="Panorámica editable">
+      <a-scene id="editor-scene" embedded xr-mode-ui="enabled: false" loading-screen="enabled: false" device-orientation-permission-ui="enabled: false" renderer="colorManagement: true; antialias: true" background="color: #132238">
+        <a-sky id="editor-sky" radius="50" segments-width="64" segments-height="32" color="#132238" rotation="0 -90 0"></a-sky>
+        <a-entity id="editor-markers"></a-entity>
+        <a-entity id="editor-rig" position="0 0 0"><a-entity id="editor-camera" camera="active: true; near: 0.05; far: 100" position="0 0 0"></a-entity></a-entity>
+      </a-scene>
+      <div class="editor-crosshair" aria-hidden="true">+</div>
+      <div class="editor-legend">Arrastra para mirar · Los puntos se editan sin cambiar de escena</div>
+      <div id="panorama-status" class="editor-loading" role="status"><p id="panorama-message">Cargando panorámica…</p><button id="retry-panorama" class="editor-button" type="button" hidden>Reintentar carga</button></div>
+    </section>
+    <aside class="editor-sidebar" aria-label="Herramientas de edición">
+      <p id="editor-feedback" class="editor-feedback" role="status" aria-live="polite" tabindex="-1">Los cambios solo se guardan al confirmarlos.</p>
+      <section class="editor-section">
+        <div class="editor-section-heading"><h2>Puntos de navegación</h2><span id="point-count"></span></div>
+        <button id="add-point" class="editor-button primary" type="button" disabled>Añadir punto</button>
+        <button id="cancel-placement" class="editor-button secondary" type="button" hidden>Cancelar ubicación</button>
+        <p id="empty-points" class="editor-muted" hidden>No hay puntos en esta escena. Añade uno sobre la panorámica.</p>
+        <ul id="point-list" class="editor-point-list" aria-label="Puntos existentes"></ul>
+        <form id="point-form" hidden>
+          {% csrf_token %}
+          <h3 id="point-form-title">Editar punto</h3>
+          <label for="point-label">Etiqueta</label><input id="point-label" name="label" type="text" required maxlength="120" autocomplete="off">
+          <label for="point-destination">Escena de destino</label><select id="point-destination" name="destination" required><option value="">Selecciona una escena</option></select>
+          <p id="point-position" class="editor-muted"></p>
+          <button id="move-point" class="editor-button secondary" type="button">Cambiar posición</button>
+          <div class="editor-actions"><button id="save-point" class="editor-button primary" type="submit">Guardar punto</button><button id="cancel-point" class="editor-button secondary" type="button">Cancelar</button></div>
+          <button id="delete-point" class="editor-delete" type="button">Eliminar punto</button>
+        </form>
+      </section>
+      <section class="editor-section">
+        <h2>Vista al iniciar</h2><p class="editor-muted">Mira hacia la dirección que recibirá al visitante.</p>
+        <button id="capture-orientation" class="editor-button secondary" type="button" disabled>Usar esta vista al iniciar</button>
+        <button id="restore-orientation" class="editor-button subtle" type="button" disabled>Restaurar vista guardada</button>
+        <p id="orientation-value" class="editor-muted"></p>
+        <div id="orientation-actions" hidden><button id="save-orientation" class="editor-button primary" type="button">Guardar orientación</button><button id="cancel-orientation" class="editor-button subtle" type="button">Cancelar orientación</button></div>
+      </section>
+      <p class="editor-muted editor-private">La prueba se abre en otra pestaña y usa únicamente datos guardados. No publica el recorrido.</p>
+    </aside>
+  </div>
+  <noscript><p>Activa JavaScript para utilizar el editor visual. Puedes volver a los formularios del administrador.</p></noscript>
+  {{ editor_data|json_script:"editor-data" }}
+</main>
+{% endblock %}

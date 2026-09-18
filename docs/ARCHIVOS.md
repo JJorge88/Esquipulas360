@@ -38,3 +38,19 @@ La fase 1 se conserva como base; no se reinició el proyecto.
 | Documentación | `README.md`, `docs/CONTENIDO.md`, `docs/VERIFICACION.md`, este inventario |
 
 No se modificaron el logo, los estilos de la identidad, las dependencias JavaScript, el generador de panorámicas ni la configuración general de portada. La base local y las copias importadas en `media/` están excluidas del commit, al igual que las capturas y otros archivos generados. No se añadieron credenciales ni despliegue.
+
+
+## Cambios de fase 3
+
+| Área | Archivos nuevos o modificados |
+| --- | --- |
+| Integración con Admin | `tours/admin.py`; nueva plantilla `templates/admin/tours/scene/change_form.html` con enlace por escena y permisos |
+| Editor y API privada | Nuevo `tours/editor.py`: acceso, creación, edición, eliminación, orientación, lectura, panorámicas y prueba privada |
+| Pantalla de edición | Nuevos `templates/tours/editor.html`, `static/js/editor.js`, `static/css/editor.css` |
+| Motor compartido | Nuevo `static/js/panorama-core.js`; extrae etiquetas, orientación y control táctil de `static/js/viewer.js` para reutilizarlos |
+| Vista de prueba | `tours/content.py`, `templates/tours/viewer.html`, `static/js/viewer.js`: mismo visor con datos guardados, rutas de imagen privadas y retorno al editor |
+| Pruebas | Nuevo `tours/test_editor.py` (22 casos), `tests/browser/editor.spec.mjs` (7 casos), servidor desechable `tests/browser/editor_server.py` y `playwright.editor.config.mjs` |
+| Comandos de prueba | `package.json`: script `test:editor`; `playwright.config.mjs`: selecciona únicamente la suite pública |
+| Documentación | Nueva `docs/EDITOR_VISUAL.md`; actualizados README, contenido, verificación e inventario |
+
+No hay cambios de modelos, migraciones, versiones de dependencias, logo, rutas públicas ni contenido persistido. Los datos del editor de prueba se crean en una base temporal; sus capturas/reportes y manifiesto de sesión efímera se excluyen de Git.

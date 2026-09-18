@@ -1,0 +1,5 @@
+{% extends "admin/change_form.html" %}
+{% block object-tools-items %}
+{% if can_edit_visually %}<li><a href="{% url 'admin:tours_scene_editor' original.pk %}">Editar puntos visualmente</a></li>{% endif %}
+{{ block.super }}
+{% endblock %}
