@@ -206,12 +206,12 @@ test('VR permission rejection is recoverable and requests occur only on click (m
   expect(await page.evaluate(() => window.xrRequests)).toBe(1);
 });
 
-test('mobile viewer fits and touch gestures rotate the panorama', async ({ browser }) => {
+test('mobile viewer fits and touch gestures rotate the panorama', async ({ browser, baseURL }) => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto('http://127.0.0.1:8000' + demo);
+  await page.goto(baseURL + demo);
   await expect(page.locator('#main')).toHaveAttribute('data-scene', 'azul');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   const session = await context.newCDPSession(page);

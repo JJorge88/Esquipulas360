@@ -1,4 +1,4 @@
-"""Private scene editor. All routes are additionally wrapped by AdminSite.admin_view."""
+"""Shared private editor, wrapped by AdminSite.admin_view or panel_access."""
 import hashlib
 import json
 import re
@@ -62,17 +62,21 @@ def orientation_data(scene):
     return {**values, "revision": revision(values)}
 
 
-def scene_data(scene, user):
+def scene_url(name, scene, request=None):
+    if request and request.resolver_match.namespace == "panel":
+        return reverse(f"panel:{name}", args=[scene.tour_id, scene.pk])
+    return reverse(f"admin:tours_scene_{name}", args=[scene.pk])
+
+
+def scene_data(scene, user, request=None):
     return {
         "scene": {"id": scene.pk, "name": scene.name, "orientation": orientation_data(scene),
-                  "panorama": reverse("admin:tours_scene_panorama", args=[scene.pk]) if file_exists(scene.panorama) else None},
+                  "panorama": scene_url("panorama", scene, request) if file_exists(scene.panorama) else None},
         "points": [point_data(p) for p in scene.hotspots.all()],
         "destinations": list(scene.tour.scenes.exclude(pk=scene.pk).values("id", "name")),
         "permissions": editor_permissions(user),
         "tolerance": settings.PANORAMA_RATIO_TOLERANCE,
-        "urls": {"points": reverse("admin:tours_scene_points", args=[scene.pk]),
-                 "orientation": reverse("admin:tours_scene_orientation", args=[scene.pk]),
-                 "preview": reverse("admin:tours_scene_preview", args=[scene.pk])},
+        "urls": {name: scene_url(name, scene, request) for name in ("points", "orientation", "preview")},
     }
 
 
@@ -122,14 +126,18 @@ def conflict():
 @access()
 def page(request, scene_id):
     scene = get_object_or_404(Scene.objects.select_related("tour"), pk=scene_id)
-    return render(request, "tours/editor.html", {"scene": scene, "editor_data": scene_data(scene, request.user)})
+    in_panel = request.resolver_match.namespace == "panel"
+    return render(request, "tours/editor.html", {"scene": scene, "editor_data": scene_data(scene, request.user, request),
+        "editor_back_url": reverse("panel:tour_edit", args=[scene.tour_id]) if in_panel else reverse("admin:tours_scene_change", args=[scene.pk]),
+        "editor_back_label": "Volver al recorrido" if in_panel else "Volver al admin",
+        "editor_preview_url": scene_url("preview", scene, request)})
 
 
 @require_GET
 @access()
 def data(request, scene_id):
     scene = get_object_or_404(Scene.objects.select_related("tour"), pk=scene_id)
-    return JsonResponse(scene_data(scene, request.user))
+    return JsonResponse(scene_data(scene, request.user, request))
 
 
 @require_http_methods(["POST"])
@@ -224,10 +232,12 @@ def preview(request, scene_id):
     tour = scene.tour
     # Preview starts at the scene being edited, even before an initial scene is chosen.
     tour.initial_scene = scene
-    payload = viewer_data(tour, private=True)
+    payload = viewer_data(tour, private=True, panorama_url=lambda item: scene_url("panorama", item, request))
+    back_url = scene_url("editor", scene, request) if can_edit(request.user) else (
+        reverse("panel:tour_edit", args=[scene.tour_id]) if request.resolver_match.namespace == "panel" else reverse("admin:tours_scene_change", args=[scene.pk]))
     return render(request, "tours/viewer.html", {
         "tour": {**present(tour), "scenes": payload["scenes"]}, "tour_data": payload,
         "private_preview": True,
-        "editor_url": reverse("admin:tours_scene_editor" if can_edit(request.user) else "admin:tours_scene_change", args=[scene.pk]),
-        "preview_back_label": "Volver al editor" if can_edit(request.user) else "Volver al admin",
+        "editor_url": back_url,
+        "preview_back_label": "Volver al editor" if can_edit(request.user) else ("Volver al recorrido" if request.resolver_match.namespace == "panel" else "Volver al admin"),
     })

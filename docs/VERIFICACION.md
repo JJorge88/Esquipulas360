@@ -1,6 +1,30 @@
-# Verificación de fase 3
+# Verificación de fase 4
 
 Entorno: macOS, Python 3.13, Django 5.2.17, Node.js 26 y Google Chrome controlado con Playwright. Las pruebas gráficas usan renderizado por software. Fecha local: 17 de septiembre de 2026.
+
+## Resultado de fase 4
+
+- **96 pruebas Django aprobadas:** 70 anteriores y 26 del panel. Incluyen inicio/cierre de sesión, rechazo de cuentas no autorizadas, permisos independientes, CSRF, ausencia de escrituras por GET, consultas y cifras reales, búsqueda sin acentos, cargas con contenido real, nombres únicos/originales, errores ligados a campos, publicación, relaciones, eliminación y rutas privadas del editor.
+- **7 pruebas del panel en Chrome aprobadas:** inicio de sesión real y cierre POST; resumen y filtros; creación de categoría y recorrido con portada; dos panorámicas cargadas desde formularios; puntos de ida y vuelta mediante el editor compartido; orientación guardada y recuperada; navegación privada del borrador y pública después de publicar; publicación incompleta rechazada; errores de validación y red que conservan texto y archivos; avisos al salir y cerrar sesión; categorías editadas/eliminadas con confirmación; bloqueos de eliminación; menú móvil, Escape/foco y ausencia de desbordamiento a 360, 390 y 768 px.
+- **7 pruebas de regresión del editor aprobadas:** se conservan creación, selección, reubicación, eliminación, arrastre, persistencia, orientación, cambios pendientes, pruebas privadas, correspondencia de marcadores y controles móviles emulados.
+- **13 pruebas públicas aprobadas:** Inicio, Explorar, búsqueda, logo, giro, navegación entre las dos escenas, orientación, liberación de texturas, tolerancia de imágenes, errores/reintento, móvil, pantalla completa y casos WebXR simulados.
+- `manage.py check` sin incidencias y `makemigrations --check --dry-run` sin cambios. No se añaden migraciones ni dependencias.
+- Recursos compilados y sintaxis JavaScript comprobada. Capturas del resumen, catálogo, edición y acceso revisadas en escritorio; menú/formulario también revisados en móvil emulado.
+- La instantánea de categorías, recorridos, escenas, puntos y permisos de las cuentas locales coincide antes y después de la verificación final. El logo coincide byte a byte (SHA-256) con el adjunto original. Los manifiestos de sesión temporales se eliminaron al cerrar las suites.
+
+Las pruebas de panel y editor usan sus propias bases temporales. Se aisló también la suite pública: el catálogo local ya tiene cambios editoriales válidos, por lo que una prueba que asumía tres lugares próximos fallaba al consultar la instalación del usuario. Las aserciones de comportamiento se conservan y ahora se ejecutan sobre una importación temporal de la demostración. No se restablecen ni reimportan los datos locales. En la prueba de selección de marcador se espera la intersección real del cursor de A-Frame antes de pulsar, para evitar un clic anterior al ciclo de renderizado.
+
+El flujo nuevo se comprobó primero con los selectores de prueba ajustados a las etiquetas accesibles reales (los botones de navegación incluyen una flecha y los campos obligatorios incluyen su indicación). Después, las suites completas finalizaron sin fallos. No se cambió el motor público para hacer pasar las pruebas.
+
+Capturas de la **base temporal de demostración**, guardadas fuera de Git:
+
+- `artifacts/panel-summary.png`: resumen en escritorio.
+- `artifacts/panel-tours.png`: tarjetas y filtros.
+- `artifacts/panel-edit.png`: información, portada, escenas y publicación.
+- `artifacts/panel-login.png`: acceso con identidad propia.
+- `artifacts/panel-mobile-summary.png` y `artifacts/panel-mobile-edit.png`: pantallas de 390 px.
+
+La prueba gráfica no valida un teléfono físico ni un Meta Quest 2. Esos pendientes se mantienen al final de este documento.
 
 ## Resultado de fase 3
 

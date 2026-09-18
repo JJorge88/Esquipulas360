@@ -1,3 +1,23 @@
+# Archivos de fase 4
+
+| Archivo o grupo | Cambio |
+| --- | --- |
+| `tours/panel.py`, `tours/panel_urls.py` | Panel, autenticación compartida, permisos por operación, resumen real, búsqueda/filtros, CRUD y eliminación con el recolector de Admin |
+| `tours/panel_forms.py` | Formularios con validación de modelos existente y configuración visible de cargas |
+| `templates/panel/`, `tours/templates/panel/file_input.html` | Plantillas propias, acceso, menú, tarjetas, formularios, confirmaciones y estados vacíos |
+| `static/css/panel.css`, `static/js/panel.js` | Identidad visual, móvil, accesibilidad, vistas previas de archivos, conservación del formulario y cambios pendientes |
+| `config/urls.py`, `tours/context.py` | Ruta `/panel/` y contexto privado |
+| `tours/editor.py`, `tours/content.py`, `templates/tours/editor.html` | Enlaces y panorámicas privadas según origen Admin/panel; misma implementación de edición y visor |
+| `tours/test_panel.py` | Pruebas de acceso, permisos, CSRF, archivos, publicación, relaciones, eliminación y endpoints compartidos |
+| `tests/browser/panel*`, `playwright.panel.config.mjs`, `package.json` | Suite gráfica con acceso real y base temporal; comando `test:panel` |
+| `tests/browser/public_server.py`, `playwright.config.mjs`, `tests/browser/experience.spec.mjs` | Datos aislados para regresiones públicas, sin asumir que el usuario no ha editado su catálogo |
+| `tests/browser/editor.spec.mjs` | Espera a que el cursor interseque realmente el marcador antes del clic de prueba |
+| `README.md`, `docs/PANEL.md`, `docs/VERIFICACION.md` | Actualización, guía de uso, permisos y resultados |
+
+No se modifican modelos, migraciones, versiones de dependencias, logo ni plantillas de las páginas públicas. Capturas y reportes se guardan en `artifacts/`, fuera de Git. No se versionan usuarios, sesiones, contraseñas, bases de datos ni archivos cargados.
+
+---
+
 # Inventario del proyecto
 
 ## Base de fase 1 (`561490c`)

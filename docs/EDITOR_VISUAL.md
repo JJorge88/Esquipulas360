@@ -1,5 +1,7 @@
 # Editor visual de escenas — fase 3
 
+En fase 4 también se abre desde **/panel/ → Recorridos → una escena → Editar puntos**. Reutiliza exactamente las herramientas y permisos descritos aquí. Al abrirlo desde el panel, **Volver al recorrido** regresa al recorrido y la prueba privada conserva las rutas del panel. Véase [PANEL.md](PANEL.md).
+
 El editor añade una herramienta a Django Admin para colocar puntos y elegir la orientación inicial mirando la panorámica. Usa A-Frame 1.8.0, las imágenes y los modelos existentes. No cambia el estado de publicación ni crea migraciones.
 
 ## Abrirlo

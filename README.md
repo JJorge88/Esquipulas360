@@ -1,10 +1,12 @@
-# Esquipulas 360° — fase 3
+# Esquipulas 360° — fase 4
 
 Plataforma turística y cultural para explorar Esquipulas, Guatemala. Esta entrega continúa las fases 1 (`561490c`) y 2 (`06dabfb`): conserva el diseño, el logo original, las rutas y el visor con sus controles y WebXR. Inicio, Explorar y el visor consultan ahora la base de datos. Los recorridos, escenas y puntos se administran desde Django Admin en español. La fase 3 añade un editor visual de puntos y orientación inicial por escena, con vista de prueba privada para borradores.
 
+La fase 4 añade el panel visual propio en **[/panel/](http://127.0.0.1:8000/panel/)** para gestionar recorridos, escenas, categorías y puntos con los mismos usuarios, permisos, validaciones y editor. `/admin/` permanece para tareas técnicas. Guía completa: [docs/PANEL.md](docs/PANEL.md).
+
 La demostración usa imágenes técnicas; **no representa un lugar real** y no requiere fotografías reales. No se ha hecho push ni despliegue.
 
-## Actualizar desde fase 2
+## Actualizar desde fase 3 (`fc2e25f`)
 
 No hay dependencias nuevas ni migraciones nuevas. Conserva tu base y `media/`; no hace falta regenerar ni reimportar contenido. Reinicia el servidor después de actualizar los archivos y verifica:
 
@@ -14,9 +16,9 @@ No hay dependencias nuevas ni migraciones nuevas. Conserva tu base y `media/`; n
 npm run build
 ```
 
-En Admin, abre una escena guardada y pulsa **Editar puntos visualmente**. Activa **Añadir punto**, haz clic sobre la panorámica, completa etiqueta/destino y guarda. Selecciona los marcadores para editar, reubicar o eliminar con confirmación. Para orientar la escena, mira en la dirección deseada, pulsa **Usar esta vista al iniciar** y **Guardar orientación**.
+Entra a **[/panel/](http://127.0.0.1:8000/panel/)** con tu cuenta existente. Abre un recorrido para editar información, portada, escenas y publicación. Desde cada escena, **Editar puntos** reutiliza el editor visual y permite guardar su orientación inicial. **Vista previa privada** abre los datos guardados, incluso en borrador. El menú incluye Resumen, Recorridos, Categorías, Ver sitio y cierre de sesión.
 
-**Probar datos guardados** abre una pestaña privada con el visor y permite recorrer escenas sin publicar borradores. Consulta [docs/EDITOR_VISUAL.md](docs/EDITOR_VISUAL.md) para permisos, cambios pendientes, errores y uso en móvil.
+Consulta [docs/PANEL.md](docs/PANEL.md) para instrucciones, permisos, cargas y eliminación; [docs/EDITOR_VISUAL.md](docs/EDITOR_VISUAL.md) conserva los detalles del editor y su acceso técnico desde Admin.
 
 ## Actualizar una instalación de fase 1
 
@@ -67,7 +69,7 @@ Ejecuta de forma interactiva y elige tu usuario, correo y contraseña:
 .venv/bin/python manage.py createsuperuser
 ```
 
-Abre [Django Admin](http://127.0.0.1:8000/admin/). No hay usuarios ni contraseñas predeterminados. No guardes credenciales en Git. Django conserva el hash de contraseña en la base local, excluida del repositorio.
+Abre el [panel visual](http://127.0.0.1:8000/panel/). Los usuarios y permisos se gestionan en [Django Admin](http://127.0.0.1:8000/admin/). No hay usuarios ni contraseñas predeterminados. No guardes credenciales en Git. Django conserva el hash de contraseña en la base local, excluida del repositorio.
 
 Se usan usuarios, grupos y permisos estándar de Django. Un editor debe ser personal activo (`is_staff`) y tener los permisos correspondientes de ver, añadir, cambiar y eliminar para categorías, recorridos, escenas y puntos. Dar solo permiso de ver no permite editar ni subir imágenes. El superusuario puede gestionar estos permisos; no es necesario otorgar permisos de usuarios/grupos a los editores.
 
@@ -75,9 +77,9 @@ Se usan usuarios, grupos y permisos estándar de Django. Un editor debe ser pers
 
 1. En **Categorías**, crea o selecciona una categoría.
 2. En **Recorridos**, añade nombre, slug, descripción y categoría; guarda como **Borrador**. La portada es opcional.
-3. En **Escenas**, crea «Escena A» para ese recorrido, sube su panorámica y guarda. Repite para «Escena B». Usa orden 0 y 1 y, para empezar, orientación horizontal y vertical 0°.
-4. Abre «Escena A». En **Puntos de navegación**, añade destino «Escena B», etiqueta «Ir a B» y posición horizontal 0°, vertical 0°. Guarda.
-5. Abre «Escena B» y crea el punto inverso hacia «Escena A» de la misma manera. Los puntos están al frente de cada escena; ajusta después sus ángulos según la imagen.
+3. Dentro del recorrido, en **Escenas**, pulsa **Añadir escena**, crea «Escena A», sube su panorámica y guarda. Repite para «Escena B». Usa orden 0 y 1.
+4. Abre **Editar puntos** en «Escena A», activa **Añadir punto**, haz clic sobre la panorámica, selecciona «Escena B» como destino, escribe «Ir a B» y guarda.
+5. Abre el editor de «Escena B» y crea el regreso hacia «Escena A». Para orientar cada escena, mira en la dirección deseada, pulsa **Usar esta vista al iniciar** y **Guardar orientación**. Prueba la navegación con **Probar datos guardados** sin publicar el borrador.
 6. Abre el recorrido, elige «Escena A» como **escena inicial**, configura destacado/orden y cambia a **Disponible**. Para imágenes técnicas, usa **Demostración** y una descripción que lo identifique.
 7. Comprueba la tarjeta en Explorar, abre el visor y verifica ida y vuelta. Si está destacado, aparecerá entre los primeros tres lugares destacados de Inicio; las demostraciones tienen su sección propia.
 
@@ -93,13 +95,15 @@ La guía [docs/CONTENIDO.md](docs/CONTENIDO.md) detalla publicación, formatos, 
 | `/explorar/` | Catálogo, búsqueda sin distinción de acentos/mayúsculas y categorías combinables |
 | `/recorridos/demostracion/` | Visor de las dos escenas técnicas importadas |
 | `/recorridos/<slug>/` | Visor solo si el recorrido es demostración o disponible y está completo |
-| `/admin/` | Administración nativa en español, con autenticación |
+| `/panel/` | Panel visual privado: resumen, recorridos, escenas y categorías |
+| `/panel/ingresar/` | Acceso con la cuenta existente de Django |
+| `/admin/` | Administración técnica: usuarios, grupos y permisos; conserva todos los modelos |
 
 **Borrador:** oculto en páginas públicas y 404 en la URL del recorrido. **Próximo:** tarjeta visible, sin acceso al visor. **Demostración:** identificada como prueba técnica. **Disponible:** requiere escena inicial del recorrido y panorámicas válidas en todas sus escenas. Demostración exige la misma integridad. Si un archivo panorámico desaparece fuera del administrador, el recorrido deja de mostrarse y su visor devuelve 404.
 
 La búsqueda funciona mediante GET sin JavaScript. El visor mantiene arrastre, gestos táctiles, puntos seleccionables, selector accesible, información, pantalla completa, carga/error/reintento y VR iniciada por botón. Los textos editoriales se muestran como texto plano, con escapado en plantillas y JSON; no se interpretan como HTML.
 
-`content/tours.json` queda como fuente histórica del importador, no como catálogo activo. La portada general de Inicio continúa en `content/site.json`; las portadas de cada recorrido se cargan desde Admin. El logo permanece en `static/images/logo.png`, sin modificaciones.
+`content/tours.json` queda como fuente histórica del importador, no como catálogo activo. La portada general de Inicio continúa en `content/site.json`; las portadas de cada recorrido se cargan desde el panel o Admin. El logo permanece en `static/images/logo.png`, sin modificaciones.
 
 ## Cambios de estructura
 
@@ -120,11 +124,12 @@ Con las panorámicas generadas y el contenido importado:
 npm run build
 npm run test:e2e
 npm run test:editor
+npm run test:panel
 ```
 
-Las pruebas de Django usan una base aislada y archivos temporales. `npm run test:editor` también usa una base y archivos desechables, un usuario sin contraseña utilizable y un servidor separado en el puerto 8013; no modifica la instalación local. Su reporte está en `artifacts/editor-report`. Las de navegador requieren Google Chrome instalado y el catálogo de demostración local; pueden iniciar el servidor si no está activo. Usan renderizado gráfico por software, guardan capturas en `artifacts/` y trazas de fallos en `test-results/`. Reporte: `npx playwright show-report`.
+Las pruebas de Django usan una base aislada y archivos temporales. Las suites de navegador también usan bases, usuarios y archivos desechables: panel en el puerto 8014, editor en 8013 y sitio público en 8015. Requieren Google Chrome, las panorámicas técnicas generadas y los recursos compilados; importan su propio catálogo sin modificar los datos de tu instalación. El panel prueba el inicio de sesión con una contraseña aleatoria solo para esa ejecución; no guarda credenciales en Git.
 
-Resultado de esta fase: **70 pruebas de Django, 13 del navegador público y 7 del editor aprobadas**. Detalle y pendientes en [docs/VERIFICACION.md](docs/VERIFICACION.md).
+Las pruebas usan renderizado gráfico por software. Guardan capturas en `artifacts/` y reportes separados en `artifacts/panel-report`, `artifacts/editor-report` y `playwright-report`. Detalles, resultados y pendientes en [docs/VERIFICACION.md](docs/VERIFICACION.md).
 
 ## Meta Quest 2
 
@@ -140,4 +145,4 @@ La experiencia usa `immersive-vr` y espacio de referencia `local`, cámara estac
 
 Django 5.2.17, A-Frame 1.8.0, Tailwind 4.3.3, Pillow 12.3.0; Playfair Display y Plus Jakarta Sans 5.3.0. Las dependencias están fijadas en `uv.lock`, `requirements.lock`, `package-lock.json` y `content/vendor.json`.
 
-Entrega limitada a fase 3: editor visual por escena integrado con Admin. No se añade audio, video, monetización, modo guiado, funcionamiento sin internet, un reemplazo de Django Admin ni despliegue.
+Entrega limitada a fase 4: panel visual propio con el editor existente y Django Admin conservado para tareas técnicas. No se añade audio, video, monetización, analítica, modo guiado, funcionamiento sin internet ni despliegue. No hay migraciones ni actualizaciones de dependencias para esta fase.

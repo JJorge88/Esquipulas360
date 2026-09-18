@@ -1,0 +1,29 @@
+{% extends 'base.html' %}{% load static %}
+{% block title %}{% block page_title %}Panel{% endblock %} · Esquipulas 360°{% endblock %}
+{% block body_class %}panel-page{% endblock %}
+{% block head %}<meta name="robots" content="noindex, nofollow"><link rel="stylesheet" href="{% static 'css/panel.css' %}"><script src="{% static 'js/panel.js' %}" defer></script>{% endblock %}
+{% block header %}{% endblock %}{% block footer %}{% endblock %}
+{% block content %}
+<div class="panel-layout">
+  <button class="panel-scrim" id="panel-scrim" type="button" aria-label="Cerrar menú" hidden></button>
+  <aside class="panel-sidebar" id="panel-sidebar" aria-label="Menú principal">
+    <a class="panel-brand" href="{% url 'panel:home' %}"><img src="{% static 'images/logo.png' %}" alt="Esquipulas 360°"><span>Esquipulas <b>360°</b><small>ADMINISTRACIÓN</small></span></a>
+    <p class="panel-nav-caption">TU PROYECTO</p>
+    <nav>
+      <a href="{% url 'panel:home' %}" {% if section == 'home' %}aria-current="page"{% endif %}><span aria-hidden="true">◫</span>Resumen</a>
+      {% if panel_permissions.view_tour %}<a href="{% url 'panel:tours' %}" {% if section == 'tours' %}aria-current="page"{% endif %}><span aria-hidden="true">◉</span>Recorridos</a>{% endif %}
+      {% if panel_permissions.view_category %}<a href="{% url 'panel:categories' %}" {% if section == 'categories' %}aria-current="page"{% endif %}><span aria-hidden="true">▦</span>Categorías</a>{% endif %}
+      <a href="{% url 'home' %}" target="_blank" rel="noopener"><span aria-hidden="true">↗</span>Ver sitio</a>
+    </nav>
+    <div class="panel-sidebar-bottom"><p>Una ciudad.<br><em>Muchas perspectivas.</em></p><div class="panel-account"><span class="panel-avatar" aria-hidden="true">{{ request.user.get_username|first|upper }}</span><span>{{ request.user.get_username }}<small>Personal autorizado</small></span></div><form method="post" action="{% url 'panel:logout' %}" data-leave-form>{% csrf_token %}<button type="submit">Cerrar sesión <span aria-hidden="true">↗</span></button></form></div>
+  </aside>
+  <div class="panel-main-wrap">
+    <header class="panel-topbar"><div><button type="button" class="panel-menu-button" id="panel-menu-button" aria-controls="panel-sidebar" aria-expanded="false" aria-label="Abrir menú">☰</button><span>Panel de administración</span></div><span class="panel-private"><i aria-hidden="true"></i> Espacio privado</span></header>
+    <main id="main" class="panel-main">
+      {% if messages %}<div class="panel-messages" aria-live="polite">{% for message in messages %}<p class="panel-notice {{ message.tags }}" role="status">{{ message }}</p>{% endfor %}</div>{% endif %}
+      {% block panel_content %}{% endblock %}
+      <footer class="panel-footnote">ESQUIPULAS 360° <span>Hecho para explorar. Diseñado para conectar.</span></footer>
+    </main>
+  </div>
+</div>
+{% endblock %}

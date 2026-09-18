@@ -35,13 +35,13 @@ def filter_tours(tours, query="", category=""):
     words = normalized(query).split()
     return [tour for tour in tours if (not category or tour.category.slug == category) and all(word in normalized(f"{tour.name} {tour.description} {tour.category.name}") for word in words)]
 
-def viewer_data(tour, *, private=False):
+def viewer_data(tour, *, private=False, panorama_url=None):
     return {
         "name": tour.name, "description": tour.description, "status": tour.status,
         "initial_scene": tour.initial_scene.key,
         "panorama_ratio_tolerance": settings.PANORAMA_RATIO_TOLERANCE,
         "scenes": [
-            {"id": scene.key, "name": scene.name, "panorama": reverse("admin:tours_scene_panorama", args=[scene.pk]) if private else scene.panorama.url,
+            {"id": scene.key, "name": scene.name, "panorama": (panorama_url(scene) if panorama_url else reverse("admin:tours_scene_panorama", args=[scene.pk])) if private else scene.panorama.url,
              "orientation": {"yaw": scene.yaw, "pitch": scene.pitch}, "text": scene.text,
              "hotspots": [{"id": point.key, "label": point.label, "destination": point.destination.key, "position": point.position()} for point in scene.hotspots.all()]}
             for scene in tour.scenes.all()

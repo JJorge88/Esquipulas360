@@ -12,9 +12,9 @@
 {% block content %}
 <main id="main" class="editor-shell" data-dirty="false">
   <header class="editor-header">
-    <a class="editor-brand" href="{% url 'admin:tours_scene_change' scene.pk %}"><img src="{% static 'images/logo.png' %}" alt="Esquipulas 360°"><span>← Volver al admin</span></a>
+    <a class="editor-brand" href="{{ editor_back_url }}"><img src="{% static 'images/logo.png' %}" alt="Esquipulas 360°"><span>← {{ editor_back_label }}</span></a>
     <div class="editor-heading"><p>{{ scene.tour.name }} · {{ scene.tour.get_status_display }}</p><h1>{{ scene.name }}</h1></div>
-    <a id="preview-link" class="editor-button secondary" href="{% url 'admin:tours_scene_preview' scene.pk %}" target="_blank" rel="noopener">Probar datos guardados ↗</a>
+    <a id="preview-link" class="editor-button secondary" href="{{ editor_preview_url }}" target="_blank" rel="noopener">Probar datos guardados ↗</a>
   </header>
   <div class="editor-toolbar"><strong>EDITOR DE PUNTOS</strong><span id="mode-hint">Arrastra para mirar. Selecciona un punto para editarlo.</span><span id="pending-state" role="status">Sin cambios pendientes</span></div>
   <div class="editor-workspace">

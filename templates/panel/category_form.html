@@ -1,0 +1,5 @@
+{% extends 'panel/base.html' %}{% block page_title %}Categoría{% endblock %}
+{% block panel_content %}
+<a class="panel-back" href="{% url 'panel:categories' %}">← Categorías</a><div class="panel-heading"><div><p class="panel-kicker">ORGANIZA TUS RECORRIDOS</p><h1>{% if obj.pk %}{{ obj.name }}{% else %}Crear categoría{% endif %}</h1><p>Un nombre claro ayuda a encontrar cada lugar.</p></div></div>
+<form method="post" data-panel-form novalidate class="panel-narrow">{% csrf_token %}{% include 'panel/partials/form_status.html' %}<section class="panel-surface"><fieldset{% if not editable %} disabled{% endif %}>{% include 'panel/partials/field.html' with field=form.name %}{% include 'panel/partials/field.html' with field=form.slug %}</fieldset></section>{% include 'panel/partials/save_bar.html' %}</form>
+{% endblock %}

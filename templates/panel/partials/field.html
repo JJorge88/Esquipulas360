@@ -1,0 +1,6 @@
+<div class="panel-field {% if field.errors %}has-error{% endif %}" data-field="{{ field.name }}">
+  <label for="{{ field.id_for_label }}">{{ field.label|capfirst }}{% if field.field.required %}<span class="panel-required" aria-label="obligatorio"> *</span>{% endif %}</label>
+  {{ field }}
+  <p class="panel-help" id="id_{{ field.name }}_help">{{ field.help_text }}</p>
+  <ul class="panel-field-errors" id="id_{{ field.name }}_errors" data-field-errors="{{ field.name }}">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+</div>

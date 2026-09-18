@@ -1,0 +1,16 @@
+{% extends 'base.html' %}{% load static %}
+{% block title %}Ingresar al panel · Esquipulas 360°{% endblock %}
+{% block body_class %}panel-page{% endblock %}{% block header %}{% endblock %}{% block footer %}{% endblock %}
+{% block head %}<meta name="robots" content="noindex, nofollow"><link rel="stylesheet" href="{% static 'css/panel.css' %}">{% endblock %}
+{% block content %}
+<main id="main" class="panel-login">
+  <section class="panel-login-brand"><a href="{% url 'home' %}"><img src="{% static 'images/logo.png' %}" alt="Esquipulas 360°"></a><p class="panel-kicker">ESQUIPULAS, DESDE CADA ÁNGULO</p><h1>Las próximas historias<br>empiezan aquí.</h1><p>Un espacio para dar forma a tus recorridos<br>y compartir nuevas perspectivas de la ciudad.</p><a class="panel-login-site" href="{% url 'home' %}">← Volver al sitio</a></section>
+  <section class="panel-login-form"><div><p class="panel-kicker">PANEL DE ADMINISTRACIÓN</p><h2>Bienvenido de nuevo</h2><p class="panel-muted">Ingresa con tu cuenta del proyecto.</p>
+    <form method="post">{% csrf_token %}<input type="hidden" name="next" value="{{ next }}">
+      {% if form.non_field_errors %}<div class="panel-notice error" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+      {% include 'panel/partials/field.html' with field=form.username %}{% include 'panel/partials/field.html' with field=form.password %}
+      <button class="panel-button primary" type="submit">Ingresar al panel <span aria-hidden="true">→</span></button>
+    </form><p class="panel-login-help">¿Necesitas acceso? Solicita una cuenta al responsable del proyecto.</p>
+  </div></section>
+</main>
+{% endblock %}

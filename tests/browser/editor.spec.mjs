@@ -162,12 +162,17 @@ test('marker position matches public viewer and navigation remains active only i
   await page.getByRole('button', { name: 'Guardar punto', exact: true }).click(); await expect(page.locator('#editor-feedback')).toHaveText('Punto guardado.');
   const position = await page.locator('#editor-markers [data-point]').first().evaluate(el => el.object3D.position.toArray());
   await page.goto('/recorridos/demostracion/'); await expect(page.locator('#main')).toHaveAttribute('data-scene', 'azul');
+  await expect(page.locator('#viewer-status')).toBeHidden();
   const actual = await page.locator('#hotspots [data-hotspot]').first().evaluate(el => el.object3D.position.toArray());
   actual.forEach((n, i) => expect(n).toBeCloseTo(position[i], 8));
   const hit = await page.locator('#hotspots [data-hotspot]').first().evaluate(el => {
     const point = new AFRAME.THREE.Vector3(); el.object3D.getWorldPosition(point); point.project(el.sceneEl.camera);
     const b = el.sceneEl.canvas.getBoundingClientRect(); return { x: b.x + (point.x + 1) / 2 * b.width, y: b.y + (1 - point.y) / 2 * b.height };
   });
+  // The A-Frame cursor updates on a render tick; wait for its actual hit before clicking.
+  const key = await page.locator('#hotspots [data-hotspot]').first().getAttribute('data-hotspot');
+  await page.mouse.move(hit.x, hit.y);
+  await expect.poll(() => page.locator('#panorama-scene').evaluate(el => el.components.cursor.intersectedEl?.closest('[data-hotspot]')?.dataset.hotspot)).toBe(key);
   await page.mouse.click(hit.x, hit.y); await expect(page.locator('#main')).toHaveAttribute('data-scene', 'ambar');
   await page.getByRole('button', { name: 'Volver a escena azul' }).click(); await expect(page.locator('#main')).toHaveAttribute('data-scene', 'azul');
 });

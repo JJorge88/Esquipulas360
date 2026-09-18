@@ -1,0 +1,2 @@
+<div class="panel-form-status {% if form.errors %}error{% endif %}" id="form-status" role="status" aria-live="polite" tabindex="-1"{% if not form.errors %} hidden{% endif %}>{% if form.errors %}No se guardaron los cambios. Revisa los campos indicados. {{ form.non_field_errors }}{% endif %}</div>
+<noscript><p class="panel-notice">Si una carga falla, vuelve a seleccionar el archivo antes de guardar.</p></noscript>
